@@ -88,7 +88,7 @@ export SMCg, step, abs, max, min, cos, sin, tan, acos, asin, atan, Interval, gra
 export sqr, pow, inv, sqrt, exp, log, *, +, -, /, ^, cc, cv, lo, hi, convert, dist, real,zgrad
 export sinh, cosh, tanh, asinh, acosh, atanh, ∩, mid3, value, mincv, maxcc, promote_rule
 export tighten_subgrad, set_iterations, set_tolerance, set_diff_relax, default_options
-export set_valid_check, set_subgrad_refine, set_multivar_refine, set_outer_rnd, show_options
+export set_valid_check, set_subgrad_refine, set_multivar_refine, set_outer_rnd
 export MC_param, mid_grad, seed_g
 
 #include("SMCg_Intervals.jl") # Includes nonvalidated interval library (Fully Done)
