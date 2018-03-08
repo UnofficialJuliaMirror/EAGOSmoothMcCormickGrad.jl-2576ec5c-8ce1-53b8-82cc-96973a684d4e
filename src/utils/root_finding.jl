@@ -1,9 +1,9 @@
 """
     newton(x0::T,xL::T,xU::T,f::Function,df::Function,envp1::T,envp2::T)
 
-Defines a local 1D newton method to solve for the root of 'f' between the bounds
-'xL' and 'xU' using 'x0' as a starting point. The derivative of f is 'df'. The
-inputs 'envp1' and 'envp2' are the envelope calculation parameters.
+Defines a local 1D newton method to solve for the root of `f` between the bounds
+`xL` and `xU` using `x0` as a starting point. The derivative of `f` is `df`. The
+inputs `envp1` and `envp2` are the envelope calculation parameters.
 """
 @inline function newton(x0::T,xL::T,xU::T,f::Function,df::Function,envp1::T,envp2::T) where {T<:Real}
   dfk::T = zero(x0)
@@ -33,9 +33,9 @@ end
 """
     secant(x0::T,x1::T,xL::T,xU::T,f::Function,envp1::T,envp2::T)  where {T<:Real}
 
-Defines a local 1D secant method to solve for the root of 'f' between
-the bounds 'xL' and 'xU' using 'x0' and 'x1' as a starting points. The inputs
-'envp1' and 'envp2' are the envelope calculation parameters.
+Defines a local 1D secant method to solve for the root of `f` between
+the bounds `xL` and `xU` using `x0` and `x1` as a starting points. The inputs
+`envp1` and `envp2` are the envelope calculation parameters.
 """
 @inline function secant(x0::T,x1::T,xL::T,xU::T,f::Function,envp1::T,envp2::T) where {T<:Real}
   xkm::T = max(xL,min(xU,x0))
@@ -66,9 +66,9 @@ end
 """
     golden_section(xL::T,xU::T,f::Function,envp1::T,envp2::T) where {T<:Real}
 
-Defines a local 1D golden section method to solve for the root of 'f' between
-the bounds 'xL' and 'xU' using 'x0' as a starting point. Define iteration used
-in golden section method. The inputs 'envp1' and 'envp2' are the envelope
+Defines a local 1D golden section method to solve for the root of `f` between
+the bounds `xL` and `xU` using `x0` as a starting point. Define iteration used
+in golden section method. The inputs `envp1` and `envp2` are the envelope
 calculation parameters.
 """
 @inline function golden_section(xL::T,xU::T,f::Function,envp1::T,envp2::T) where {T<:Real}
@@ -86,12 +86,11 @@ end
     golden_section_it(init::Int64,a::T,fa::T,b::T,fb::T,c::T,
                       fc::T,f::Function,envp1::T,envp2::T) where {T<:Real}
 
-Define iteration used in golden section method. The inputs 'fa','fb', and 'fc',
-are the function 'f' evaluated at 'a','b', and 'c' respectively. The inputs
-'envp1' and 'envp2' are the envelope calculation parameters. The value 'init' is
-the iteration numbe rof the golden section method.
+Define iteration used in golden section method. The inputs `fa`,`fb`, and `fc`,
+are the function `f` evaluated at `a`,`b`, and `c` respectively. The inputs
+`envp1` and `envp2` are the envelope calculation parameters. The value `init` is
+the iteration number of the golden section method.
 """
-# TO DO CHECK GOLDEN SECTION CALC
 @inline function golden_section_it(init::Int64,a::T,fa::T,b::T,fb::T,c::T,
                                    fc::T,f::Function,envp1::T,envp2::T) where {T<:Real}
   b_t_x::Bool = (c-b > b-a)

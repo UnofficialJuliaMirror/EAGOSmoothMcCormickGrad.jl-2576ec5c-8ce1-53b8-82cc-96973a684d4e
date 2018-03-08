@@ -1,10 +1,7 @@
 """
---------------------------------------------------------------------------------
-Function: GenExpansionParams
---------------------------------------------------------------------------------
-Description: Generates relaxation of state variable at pmid in P
---------------------------------------------------------------------------------
-Inputs:
+    GenExpansionParams
+
+Generates relaxation of state variable at pmid in P. Inputs are:
 h        function - h(z,p) which implicit defines state function
 hj       function - hj(z,p) w.r.t z which implicit defines state function
 X        IntervalBox - State variable bounds

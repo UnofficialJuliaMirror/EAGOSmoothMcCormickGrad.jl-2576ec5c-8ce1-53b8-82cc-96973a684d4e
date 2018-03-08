@@ -1,4 +1,4 @@
-__precompile__(true)
+#__precompile__(true)
 
 module EAGOSmoothMcCormickGrad
 
@@ -20,11 +20,13 @@ end
 
 const MC_param = McCormickParamters()
 
-#abstract type AbstractMC <: Real end
 
+flt_un = Union{Float16,Float32,Float64}
+
+#abstract type AbstractMC <: Real end
 """SMC is the smooth McCormick structure consisting of a concave relaxation field, cc, a convex relaxation field, cv, and a interval field, Intv.
 """
-struct SMCg{N,T<:Real} <: Real
+struct SMCg{N,T<:AbstractFloat} <: Real
   cc::T
   cv::T
   cc_grad::SVector{N,T}
@@ -38,13 +40,20 @@ struct SMCg{N,T<:Real} <: Real
                 Intv1::Interval{T},cnst1::Bool,Intv1Box::Vector{Interval{T}},
                 xref1::Vector{T}) where {N,T}
     if MC_param.outer_rnding
-      Intv1 = outer_rnd(Intv1)
+      outer_rnd!(Intv1)
     end
     if MC_param.subgrad_refine
       Intv1 = tighten_subgrad(cc1,cv1,cc_grad1,cv_grad1,Intv1,Intv1Box,xref1)
     end
     if (MC_param.mu < 1)
-      cc1,cv1,cc_grad1,cv_grad1 = cut_bnds(cc1,cv1,cc_grad1,cv_grad1,Intv1)
+      if (cc1 > Intv1.hi)
+        cc1 = Intv1.hi
+        cc_grad1 = zero(cc_grad1)
+      end
+      if (cv1 < Intv1.lo)
+        cv1 = Intv1.lo
+        cv_grad1 = zero(cc_grad1)
+      end
     end
     if MC_param.valid_check
       if (cc1<cv1)
@@ -89,12 +98,10 @@ export sqr, pow, inv, sqrt, exp, log, *, +, -, /, ^, cc, cv, lo, hi, convert, di
 export sinh, cosh, tanh, asinh, acosh, atanh, ∩, mid3, value, mincv, maxcc, promote_rule
 export tighten_subgrad, set_iterations, set_tolerance, set_diff_relax, default_options
 export set_valid_check, set_subgrad_refine, set_multivar_refine, set_outer_rnd
-export MC_param, mid_grad, seed_g
+export MC_param, mid_grad, seed_g, line_seg, dline_seg, outer_rnd
 
-#include("SMCg_Intervals.jl") # Includes nonvalidated interval library (Fully Done)
-
-function __init__()
-end
+#function __init__()
+#end
 
 # Initialization
 """SMC(y::Interval) initializes the differentiable McCormick object with an interval
@@ -119,7 +126,6 @@ include("operators/SMCg_Trignometric.jl")
 include("operators/SMCg_Hyperbolic.jl")
 include("operators/SMCg_Extrema.jl")
 include("operators/SMCg_Other.jl")
-include("operators/User_Def.jl")
 
 export mc_opts, SetOptions!, MC_KrawczykCW, MC_NewtonGS, GenExpansionParams,
        MC_impRelax, impRelax_f, impRelax_fg, set_default!

@@ -1,21 +1,21 @@
-@inline function sinh_env(x,y,z)
+@inline function sinh_env(x::T,y::T,z::T) where {T<:AbstractFloat}
   return sinh(y)-sinh(x)-(y-x)*cosh(x)
 end
-@inline function sinh_envd(x,y,z)
+@inline function sinh_envd(x::T,y::T,z::T) where {T<:AbstractFloat}
   return (y-x)*sinh(x)
 end
-@inline function cv_sinh(x,xL,xU)
-  p = zero(x)
-  if (xL>=zero(x))
+@inline function cv_sinh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
+  p::T = zero(T)
+  if (xL>=zero(T))
     return sinh(x),cosh(x)
-  elseif (xU<=zero(x))
+  elseif (xU<=zero(T))
     return line_seg(x,xL,sinh(xL),xU,sinh(xU)),dline_seg(x,xL,sinh(xL),xU,sinh(xU))
   else
     try
-      p = newton(xL,xL,zero(x),sinh_env,sinh_envd,xU,zero(x))
+      p = newton(xL,xL,zero(T),sinh_env,sinh_envd,xU,zero(T))
     catch e
       if isa(e, ErrorException)
-        p = golden_section(xL,zero(x),sinh_env,xU,zero(x))
+        p = golden_section(xL,zero(T),sinh_env,xU,zero(T))
       end
     end
     if (x>p)
@@ -25,18 +25,18 @@ end
     end
   end
 end
-@inline function cc_sinh(x,xL,xU)
-  p = zero(x)
-  if (xL>=zero(x))
+@inline function cc_sinh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
+  p::T = zero(T)
+  if (xL>=zero(T))
     return line_seg(x,xL,sinh(xL),xU,sinh(xU)),dline_seg(x,xL,sinh(xL),xU,sinh(xU))
-  elseif (xU<=zero(x))
+  elseif (xU<=zero(T))
     return sinh(x),cosh(x)
   else
     try
-      p = newton(xU,zero(x),xU,sinh_env,sinh_envd,xL,zero(x))
+      p = newton(xU,zero(T),xU,sinh_env,sinh_envd,xL,zero(T))
     catch e
       if isa(e, ErrorException)
-        p = golden_section(zero(x),xU,sinh_env,xL,zero(x))
+        p = golden_section(zero(T),xU,sinh_env,xL,zero(T))
       end
     end
     if (x>p)
@@ -46,20 +46,20 @@ end
     end
   end
 end
-@inline function sinh(x::SMCg{N,T}) where {N,T}
-  eps_max = x.Intv.hi
-  eps_min = x.Intv.lo
-  midcc,cc_id = mid3(x.cc,x.cv,eps_max)
-  midcv,cv_id = mid3(x.cc,x.cv,eps_min)
-  cc,dcc = cc_sinh(midcc,x.Intv.lo,x.Intv.hi)
-  cv,dcv = cv_sinh(midcv,x.Intv.lo,x.Intv.hi)
+@inline function sinh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+  eps_max::T = x.Intv.hi
+  eps_min::T = x.Intv.lo
+  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+  cc::T,dcc::T = cc_sinh(midcc,x.Intv.lo,x.Intv.hi)
+  cv::T,dcv::T = cv_sinh(midcv,x.Intv.lo,x.Intv.hi)
   if (MC_param.mu >= 1)
-    gcc1,gdcc1 = cc_sinh(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcv1,gdcv1 = cv_sinh(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcc2,gdcc2 = cc_sinh(x.cc,x.Intv.lo,x.Intv.hi,c)
-    gcv2,gdcv2 = cv_sinh(x.cc,x.Intv.lo,x.Intv.hi,c)
-    cv_grad = max(0.0,gdcv1)*x.cv_grad + min(0.0,gdcv2)*x.cc_grad
-    cc_grad = min(0.0,gdcc1)*x.cv_grad + max(0.0,gdcc2)*x.cc_grad
+    gcc1::T,gdcc1::T = cc_sinh(x.cv,x.Intv.lo,x.Intv.hi,c)
+    gcv1::T,gdcv1::T = cv_sinh(x.cv,x.Intv.lo,x.Intv.hi,c)
+    gcc2::T,gdcc2::T = cc_sinh(x.cc,x.Intv.lo,x.Intv.hi,c)
+    gcv2::T,gdcv2::T = cv_sinh(x.cc,x.Intv.lo,x.Intv.hi,c)
+    cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
+    cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
@@ -67,40 +67,38 @@ end
   return SMCg{N,T}(cc, cv, cc_grad, cv_grad, sinh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end
 
-@inline function asinh_env(x,y,z)
-  val = (asinh(z)-asinh(x))/(z-x)-1.0/sqrt(1.0+x^2.0)
-  return val
+@inline function asinh_env(x::T,y::T,z::T) where {T<:AbstractFloat}
+  return (asinh(z)-asinh(x))/(z-x)-one(T)/sqrt(one(T)+x^2)
 end
-@inline function asinh_envd(x,y,z)
-  val = (asinh(z)-asinh(x))/(z-x)^2.0+x/(x^2.0+1.0)^(1.5)-1.0/((z-x)*sqrt(x^2.0+1.0))
-  return val
+@inline function asinh_envd(x::T,y::T,z::T) where {T<:AbstractFloat}
+  return (asinh(z)-asinh(x))/(z-x)^2+x/(x^2+one(T))^(3/2)-one(T)/((z-x)*sqrt(x^2+one(T)))
 end
-@inline function cv_asinh(x,xL,xU)
-  p = zero(x)
-  if (xL>=zero(x))
+@inline function cv_asinh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
+  p::T = zero(T)
+  if (xL>=zero(T))
     return line_seg(x,xL,asinh(xL),xU,asinh(xU)),dline_seg(x,xL,asinh(xL),xU,asinh(xU))
-  elseif (xU<=zero(x))
-    return asinh(x),1/sqrt(x^2+1)
+  elseif (xU<=zero(T))
+    return asinh(x),one(T)/sqrt(x^2+one(T))
   else
     try
-      p = newton(xL/2.0,xL,zero(x),asinh_env,asinh_envd,xL,xU)
+      p = newton(xL/2,xL,zero(x),asinh_env,asinh_envd,xL,xU)
     catch e
       if isa(e, ErrorException)
         p = golden_section(xL,zero(x),asinh_env,xL,xU)
       end
     end
     if (x<=p)
-      return asinh(x),1/sqrt(x^2+1)
+      return asinh(x),one(T)/sqrt(x^2+one(T))
     else
       return line_seg(x,p,asinh(p),xU,asinh(xU)),dline_seg(x,p,asinh(p),xU,asinh(xU))
     end
   end
 end
-@inline function cc_asinh(x,xL,xU)
-  p = zero(x)
-  if (xL>=zero(x))
-    return asinh(x),1/sqrt(x^2+1)
-  elseif (xU<=zero(x))
+@inline function cc_asinh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
+  p = zero(T)
+  if (xL>=zero(T))
+    return asinh(x),one(T)/sqrt(x^2+one(T))
+  elseif (xU<=zero(T))
     return line_seg(x,xL,asinh(xL),xU,asinh(xU)),dline_seg(x,xL,asinh(xL),xU,asinh(xU))
   else
     try
@@ -113,24 +111,24 @@ end
     if (x<=p)
       return line_seg(x,xL,asinh(xL),p,asinh(p)),dline_seg(x,xL,asinh(xL),p,asinh(p))
     else
-      return asinh(x),1/sqrt(x^2+1)
+      return asinh(x),one(T)/sqrt(x^2+one(T))
     end
   end
 end
-@inline function asinh(x::SMCg{N,T}) where {N,T}
-  eps_max = x.Intv.hi
-  eps_min = x.Intv.lo
-  midcc,cc_id = mid3(x.cc,x.cv,eps_max)
-  midcv,cv_id = mid3(x.cc,x.cv,eps_min)
-  cc,dcc = cc_asinh(midcc,x.Intv.lo,x.Intv.hi)
-  cv,dcv = cv_asinh(midcv,x.Intv.lo,x.Intv.hi)
+@inline function asinh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+  eps_max::T = x.Intv.hi
+  eps_min::T = x.Intv.lo
+  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+  cc::T,dcc::T = cc_asinh(midcc,x.Intv.lo,x.Intv.hi)
+  cv::T,dcv::T = cv_asinh(midcv,x.Intv.lo,x.Intv.hi)
   if (MC_param.mu >= 1)
-    gcc1,gdcc1 = cc_asinh(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcv1,gdcv1 = cv_asinh(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcc2,gdcc2 = cc_asinh(x.cc,x.Intv.lo,x.Intv.hi,c)
-    gcv2,gdcv2 = cv_asinh(x.cc,x.Intv.lo,x.Intv.hi,c)
-    cv_grad = max(0.0,gdcv1)*x.cv_grad + min(0.0,gdcv2)*x.cc_grad
-    cc_grad = min(0.0,gdcc1)*x.cv_grad + max(0.0,gdcc2)*x.cc_grad
+    gcc1::T,gdcc1::T = cc_asinh(x.cv,x.Intv.lo,x.Intv.hi,c)
+    gcv1::T,gdcv1::T = cv_asinh(x.cv,x.Intv.lo,x.Intv.hi,c)
+    gcc2::T,gdcc2::T = cc_asinh(x.cc,x.Intv.lo,x.Intv.hi,c)
+    gcv2::T,gdcv2::T = cv_asinh(x.cc,x.Intv.lo,x.Intv.hi,c)
+    cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
+    cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
@@ -138,24 +136,24 @@ end
   return SMCg{N,T}(cc, cv, cc_grad, cv_grad, asinh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end
 
-@inline function tanh_env(x,y,z)
-  return (tanh(y)-tanh(x))/(1.0-tanh(x)^2)-y+x
+@inline function tanh_env(x::T,y::T,z::T) where {T<:AbstractFloat}
+  return (tanh(y)-tanh(x))/(one(T)-tanh(x)^2)-y+x
 end
-@inline function tanh_envd(x,y,z)
-  return -((1.0-tanh(x)^2)^(-2.0))*(tanh(y)-tanh(x))
+@inline function tanh_envd(x::T,y::T,z::T) where {T<:AbstractFloat}
+  return -((one(T)-tanh(x)^2)^(-2))*(tanh(y)-tanh(x))
 end
-@inline function cv_tanh(x,xL,xU)
-  p = zero(x)
-  if (xL>=zero(x))
+@inline function cv_tanh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
+  p::T = zero(T)
+  if (xL>=zero(T))
     return line_seg(x,xL,tanh(xL),xU,tanh(xU)),dline_seg(x,xL,tanh(xL),xU,tanh(xU))
-  elseif (xU<=zero(x))
+  elseif (xU<=zero(T))
     return tanh(x),sech(x)^2
   else
     try
-      p = newton(xL,xL,zero(x),tanh_env,tanh_envd,xU,zero(x))
+      p = newton(xL,xL,zero(T),tanh_env,tanh_envd,xU,zero(T))
     catch e
       if isa(e, ErrorException)
-        p = golden_section(xL,zero(x),tanh_env,xU,zero(x))
+        p = golden_section(xL,zero(T),tanh_env,xU,zero(T))
       end
     end
     if (x<=p)
@@ -165,18 +163,18 @@ end
     end
   end
 end
-@inline function cc_tanh(x,xL,xU)
-  p = zero(x)
-  if (xL>=zero(x))
+@inline function cc_tanh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
+  p::T = zero(T)
+  if (xL>=zero(T))
     return tanh(x),sech(x)^2
-  elseif (xU<=zero(x))
+  elseif (xU<=zero(T))
     return line_seg(x,xL,tanh(xL),xU,tanh(xU)),dline_seg(x,xL,tanh(xL),xU,tanh(xU))
   else
     try
-      p = newton(xU/2,zero(x),xU,tanh_env,tanh_envd,xL,xU)
+      p = newton(xU/2,zero(T),xU,tanh_env,tanh_envd,xL,xU)
     catch e
       if isa(e, ErrorException)
-        p = golden_section(zero(x),xU,tanh_env,xL,zero(x))
+        p = golden_section(zero(T),xU,tanh_env,xL,zero(T))
       end
     end
     if (x<=p)
@@ -186,20 +184,20 @@ end
     end
   end
 end
-@inline function tanh(x::SMCg{N,T}) where {N,T}
-  eps_max = x.Intv.hi
-  eps_min = x.Intv.lo
-  midcc,cc_id = mid3(x.cc,x.cv,eps_max)
-  midcv,cv_id = mid3(x.cc,x.cv,eps_min)
-  cc,dcc = cc_tanh(midcc,x.Intv.lo,x.Intv.hi)
-  cv,dcv = cv_tanh(midcv,x.Intv.lo,x.Intv.hi)
+@inline function tanh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+  eps_max::T = x.Intv.hi
+  eps_min::T = x.Intv.lo
+  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+  cc::T,dcc::T = cc_tanh(midcc,x.Intv.lo,x.Intv.hi)
+  cv::T,dcv::T = cv_tanh(midcv,x.Intv.lo,x.Intv.hi)
   if (MC_param.mu >= 1)
-    gcc1,gdcc1 = cc_tanh(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcv1,gdcv1 = cv_tanh(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcc2,gdcc2 = cc_tanh(x.cc,x.Intv.lo,x.Intv.hi,c)
-    gcv2,gdcv2 = cv_tanh(x.cc,x.Intv.lo,x.Intv.hi,c)
-    cv_grad = max(0.0,gdcv1)*x.cv_grad + min(0.0,gdcv2)*x.cc_grad
-    cc_grad = min(0.0,gdcc1)*x.cv_grad + max(0.0,gdcc2)*x.cc_grad
+    gcc1::T,gdcc1::T = cc_tanh(x.cv,x.Intv.lo,x.Intv.hi,c)
+    gcv1::T,gdcv1::T = cv_tanh(x.cv,x.Intv.lo,x.Intv.hi,c)
+    gcc2::T,gdcc2::T = cc_tanh(x.cc,x.Intv.lo,x.Intv.hi,c)
+    gcv2::T,gdcv2::T = cv_tanh(x.cc,x.Intv.lo,x.Intv.hi,c)
+    cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
+    cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
@@ -207,68 +205,68 @@ end
   return SMCg{N,T}(cc, cv, cc_grad, cv_grad, tanh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end
 
-@inline function atanh_env(x,y,z)
-  return (x-y)-(1.0-x^2.0)*(atan(x)-atan(y))
+@inline function atanh_env(x::T,y::T,z::T) where {T<:AbstractFloat}
+  return (x-y)-(one(T)-x^2)*(atan(x)-atan(y))
 end
-@inline function atanh_envd(x,y,z)
-  return 1+2.0*x*(atan(x)-atan(y))
+@inline function atanh_envd(x::T,y::T,z::T) where {T<:AbstractFloat}
+  return one(T)+2*x*(atan(x)-atan(y))
 end
-@inline function cv_atanh(x,xL,xU)
-  p = zero(x)
-  if (xL>=zero(x))
-    return atanh(x),1/(1-x^2)
-  elseif (xU<=zero(x))
+@inline function cv_atanh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
+  p::T = zero(T)
+  if (xL>=zero(T))
+    return atanh(x),one(T)/(one(T)-x^2)
+  elseif (xU<=zero(T))
     return line_seg(x,xL,atanh(xL),xU,atanh(xU)),dline_seg(x,xL,atanh(xL),xU,atanh(xU))
   else
     try
-      p = newton(xU,zero(x),xU,atanh_env,atanh_envd,xL,xU)
+      p = newton(xU,zero(T),xU,atanh_env,atanh_envd,xL,xU)
     catch e
       if isa(e, ErrorException)
-        p = golden_section(xL,zero(x),atanh_env,xU,zero(x))
+        p = golden_section(xL,zero(T),atanh_env,xU,zero(T))
       end
     end
     if (x>p)
-      return atanh(x),1/(1-x^2)
+      return atanh(x),one(T)/(one(T)-x^2)
     else
       return line_seg(x,p,atanh(p),xU,atanh(xU)),dline_seg(x,p,atanh(p),xU,atanh(xU))
     end
   end
 end
-@inline function cc_atanh(x,xL,xU)
-  p = zero(x)
-  if (xL>=zero(x))
+@inline function cc_atanh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
+  p::T = zero(T)
+  if (xL>=zero(T))
     return line_seg(x,xL,atanh(xL),xU,atanh(xU)),dline_seg(x,xL,atanh(xL),xU,atanh(xU))
-  elseif (xU<=zero(x))
-    return atanh(x),1/(1-x^2)
+  elseif (xU<=zero(T))
+    return atanh(x),one(T)/(one(T)-x^2)
   else
     try
-      p = newton(xL,xL,zero(x),atanh_env,atanh_envd,xL,xU)
+      p = newton(xL,xL,zero(T),atanh_env,atanh_envd,xL,xU)
     catch e
       if isa(e, ErrorException)
-        p = golden_section(zero(x),xU,atanh_env,xL,zero(x))
+        p = golden_section(zero(T),xU,atanh_env,xL,zero(T))
       end
     end
     if (x>p)
       return line_seg(x,xU,atanh(xU),p,atanh(p)),dline_seg(x,xU,atanh(xU),p,atanh(p))
     else
-      return atanh(x),1/(1-x^2)
+      return atanh(x),one(T)/(one(T)-x^2)
     end
   end
 end
-@inline function atanh(x::SMCg{N,T}) where {N,T}
-  eps_max = x.Intv.hi
-  eps_min = x.Intv.lo
-  midcc,cc_id = mid3(x.cc,x.cv,eps_max)
-  midcv,cv_id = mid3(x.cc,x.cv,eps_min)
-  cc,dcc = cc_atanh(midcc,x.Intv.lo,x.Intv.hi)
-  cv,dcv = cv_atanh(midcv,x.Intv.lo,x.Intv.hi)
+@inline function atanh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+  eps_max::T = x.Intv.hi
+  eps_min::T = x.Intv.lo
+  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+  cc::T,dcc::T = cc_atanh(midcc,x.Intv.lo,x.Intv.hi)
+  cv::T,dcv::T = cv_atanh(midcv,x.Intv.lo,x.Intv.hi)
   if (MC_param.mu >= 1)
-    gcc1,gdcc1 = cc_atanh(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcv1,gdcv1 = cv_atanh(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcc2,gdcc2 = cc_atanh(x.cc,x.Intv.lo,x.Intv.hi,c)
-    gcv2,gdcv2 = cv_atanh(x.cc,x.Intv.lo,x.Intv.hi,c)
-    cv_grad = max(0.0,gdcv1)*x.cv_grad + min(0.0,gdcv2)*x.cc_grad
-    cc_grad = min(0.0,gdcc1)*x.cv_grad + max(0.0,gdcc2)*x.cc_grad
+    gcc1::T,gdcc1::T = cc_atanh(x.cv,x.Intv.lo,x.Intv.hi,c)
+    gcv1::T,gdcv1::T = cv_atanh(x.cv,x.Intv.lo,x.Intv.hi,c)
+    gcc2::T,gdcc2::T = cc_atanh(x.cc,x.Intv.lo,x.Intv.hi,c)
+    gcv2::T,gdcv2::T = cv_atanh(x.cc,x.Intv.lo,x.Intv.hi,c)
+    cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
+    cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv

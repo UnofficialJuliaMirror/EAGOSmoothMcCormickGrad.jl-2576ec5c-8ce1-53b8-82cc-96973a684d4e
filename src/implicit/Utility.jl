@@ -1,3 +1,5 @@
+"""
+"""
 function Smooth_Cut(x_mc::SMCg,x_mc_int::SMCg)
   t_cv = max(x_mc,x_mc_int.Intv.lo)
   t_cc = min(x_mc,x_mc_int.Intv.hi)
@@ -8,8 +10,6 @@ function Smooth_Cut(x_mc::SMCg,x_mc_int::SMCg)
 end
 
 function Final_Cut(x_mc::SMCg,x_mc_int::SMCg)
-  #println("x_mc: ", x_mc)
-  #println("x_mc_int: ", x_mc_int)
   if (MC_param.mu < 1)
     Intv::Interval = x_mc.Intv ∩ x_mc_int.Intv
     if (x_mc.cc <= x_mc_int.cc)
@@ -26,10 +26,6 @@ function Final_Cut(x_mc::SMCg,x_mc_int::SMCg)
       cv = x_mc_int.cv
       cv_grad = x_mc_int.cv_grad
     end
-    #println("cc: ", cc)
-    #println("cv: ", cv)
-    #println("Intv.lo ", Intv.lo)
-    #println("Intv.hi ", Intv.hi)
     x_mc = SMCg(cc,cv,cc_grad,cv_grad,Intv,x_mc.cnst,x_mc.IntvBox,x_mc.xref)
   else
     x_mc = Smooth_Cut(x_mc,x_mc_int)
@@ -75,6 +71,12 @@ function Rnd_Out_H_All(z_mct,Y_mct,epsv)
   return temp1,temp2
 end
 
+"""
+    Precondition(hm,hJm,Y,nx)
+
+Preconditions `hm` and `hJm` by `Y` where all dimensions are `nx`. Returns the
+tuple `(Y*hm,Y*hJm)`.
+"""
 function Precondition(hm,hJm,Y,nx)
   S1,S2 = 0.0,0.0
   for i=1:nx
@@ -82,14 +84,9 @@ function Precondition(hm,hJm,Y,nx)
     for j=1:nx
       S1 = 0.0
       for k=1:nx
-        #println("precond i: ", i)
-        #println("precond j: ", j)
-        #println("precond k: ", k)
         temp1 = Y[i,k]
         temp2 = hJm[k,j]
-        #println("temp1: ", temp1)
-        #println("temp2: ", temp2)
-        S1 = S1 + temp1*temp2
+        S1 = S1 + Y[i,k]*hJm[k,j]
       end
       hJm[i,j] = S1
       S2 += Y[i,j]*hm[j]

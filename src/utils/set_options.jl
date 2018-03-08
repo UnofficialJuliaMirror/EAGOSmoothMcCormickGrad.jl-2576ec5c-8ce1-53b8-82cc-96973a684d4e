@@ -2,15 +2,15 @@
     default_options()
 
 Sets McCormickParameters to default.
-* env_max_int = 100         # number of iterations used for envelope calculations
-* env_tol = 1E-10           # tolerance used for envelope calculations
-* mu = 0                    # nonsmooth McCormick relaxations used
-* valid_check = true        # relaxtions and intervals are checked for validity
-* subgrad_refine = false    # don't use interval refinement by subgradient propagation
-* multivar_refine = false   # don't use multivariant relaxations
-* mv_tol = 1E-15            # tolerance for multivariant relaxations.
-* outer_rnding = false      # outer rounding of interval and relaxation disabled
-* outer_param = 0.0         # amount of outer rounding
+* `env_max_int = 100`: number of iterations used for envelope calculations
+* `env_tol = 1E-10`: tolerance used for envelope calculations
+* `mu = 0`: nonsmooth McCormick relaxations used
+* `valid_check = true`: relaxtions and intervals are checked for validity
+* `subgrad_refine = false`: don't use interval refinement by subgradient propagation
+* `multivar_refine = false`: don't use multivariant relaxations
+* `mv_tol = 1E-15`: tolerance for multivariant relaxations.
+* `outer_rnding = false`: outer rounding of interval and relaxation disabled
+* `outer_param = 0.0`: amount of outer rounding
 """
 function default_options()
   MC_param = McCormickParamters()
@@ -81,7 +81,7 @@ end
 """
     set_outer_rnd(bool,tol)
 
-Set flag 'bool' for outer round (cc/cv) and do so by 'tol'.
+Set flag `bool` for outer round (`cc`/`cv`) and do so by `tol`.
 """
 function set_outer_rnd(bool,tol)
   MC_param.outer_rnding = bool

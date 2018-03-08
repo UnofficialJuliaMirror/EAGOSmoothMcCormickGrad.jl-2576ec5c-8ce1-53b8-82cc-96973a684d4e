@@ -1,44 +1,72 @@
-# sets subgradient (length n) of x to be 1 at j
-function grad(x::SMCg{N,T},j,n) where {N,T}
-  cc_grad = [i == j ? 1.0 : 0.0 for i=1:n]
-  cv_grad = [i == j ? 1.0 : 0.0 for i=1:n]
-  return SMCg{N,T}(x.cc,x.cv,cc_grad,cv_grad,x.Intv,x.cnst,x.IntvBox,x.xref)
+"""
+    seed_g(T::Type,j::Int64,N::Int64)
+
+Creates a `x::SVector{N,T}` object that is one at `x[j]` and zero everywhere else.
+"""
+function seed_g(T::Type,j::Int64,N::Int64)
+    return SVector{N,T}([i == j ? 1.0 : 0.0 for i=1:N])
 end
-# sets subgradient (length n) of x to zero
-function zgrad(x::SMCg{N,T},n) where {N,T}
-  grad = @SVector zeros(n)
+
+"""
+    grad(x::SMCg{N,T},j,n) where {N,T}
+
+sets convex and concave (sub)gradients of length `n` of `x` to be `1` at index `j`
+"""
+function grad(x::SMCg{N,T},j::Int64) where {N,T<:AbstractFloat}
+  sv_grad::SVector{N,T} = seed_g(T,j,N)
+  return SMCg{N,T}(x.cc,x.cv,sv_grad,sv_grad,x.Intv,x.cnst,x.IntvBox,x.xref)
+end
+
+"""
+    zgrad(x::SMCg{N,T},n::Int64) where {N,T}
+
+sets convex and concave (sub)gradients of length `n` to be zero
+"""
+function zgrad(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+  grad::SVector{N,T} = @SVector zeros(N)
   return SMCg{N,T}(x.cc,x.cv,grad,grad,x.Intv,x.cnst,x.IntvBox,x.xref)
 end
-function SMCg{N,T}(cc,cv,gp,Intv,IntvBox,xref) where {N,T}
-  temp = SMCg{N,T}(cc,cv,[],[],Intv,x.cnst,IntvBox,xref)
-  return grad(temp,gp[1],gp[2],IntvBox)
+
+function convert(::Type{SMCg{N,T}},x::S) where {S<:Integer,N,T<:AbstractFloat}
+          seed::SVector{N,T} = @SVector zeros(T,N)
+          SMCg{N,T}(convert(T,x),convert(T,x),seed,seed,Interval(convert(Interval{T},x)),
+                    false,[emptyinterval(T)],[zero(T)])
+end
+function convert(::Type{SMCg{N,T}},x::S) where {S<:AbstractFloat,N,T<:AbstractFloat}
+          seed::SVector{N,T} = @SVector zeros(T,N)
+          SMCg{N,T}(convert(T,x),convert(T,x),seed,seed,Interval(convert(Interval{T},x)),
+                    false,[emptyinterval(T)],[zero(T)])
+end
+function convert(::Type{SMCg{N,T}},x::S) where {S<:Interval,N,T<:AbstractFloat}
+          seed::SVector{N,T} = @SVector zeros(T,N)
+          SMCg{N,T}(convert(T,x.hi),convert(T,x.lo),seed,seed,convert(Interval{T},x),
+                    false,[emptyinterval(T)],[zero(T)])
 end
 
-function convert(::Type{SMCg{N,T}},x::S) where {S<:Integer,N,T}
-          seed = @SVector zeros(Float64,N)
-          SMCg{N,T}(x,x,seed,seed,Interval(x),false,[Interval(0.0,1.0)],[1.0])
-end
-function convert(::Type{SMCg{N,T}},x::S) where {S<:AbstractFloat,N,T}
-          seed = @SVector zeros(Float64,N)
-          SMCg{N,T}(x,x,seed,seed,Interval(x),false,[Interval(0.0,1.0)],[1.0])
-end
-function convert(::Type{SMCg{N,T}},x::S) where {S<:Interval,N,T}
-          seed = @SVector zeros(Float64,N)
-          SMCg{N,T}(x.hi,x.lo,seed,seed,x,false,[Interval(0.0,1.0)],[1.0])
-end
-promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Integer,N,T} = SMCg{N,T}
-promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:AbstractFloat,N,T} = SMCg{N,T}
-promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Interval,N,T} = SMCg{N,T}
-promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Real,N,T} = SMCg{N,T}
+promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Integer,N,T<:AbstractFloat} = SMCg{N,T}
+promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:AbstractFloat,N,T<:AbstractFloat} = SMCg{N,T}
+promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Interval,N,T<:AbstractFloat} = SMCg{N,T}
+promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Real,N,T<:AbstractFloat} = SMCg{N,T}
 
-# Defines functions smooth McCormick relaxations depend on
-########### defines middle operator
-@inline function mid3(x,y,z)
+"""
+    mid3(x::T,y::T,z::T)
+
+Calculates the midpoint of three numbers returning the value and the index.
+"""
+function mid3(x::T,y::T,z::T) where {T<:AbstractFloat}
   (((x>=y)&&(y>=z))||((z>=y)&&(y>=x))) && (return y,2)
   (((y>=x)&&(x>=z))||((z>=x)&&(x>=y))) && (return x,1)
   return z,3
 end
-function mid_grad(cc_grad, cv_grad, id)
+
+"""
+    mid_grad(cc_grad::SVector{N,T}, cv_grad::SVector{N,T}, id::Int64)
+
+Takes the concave relaxation gradient 'cc_grad', the convex relaxation gradient
+'cv_grad', and the index of the midpoint returned 'id' and outputs the appropriate
+gradient according to McCormick relaxation rules.
+"""
+function mid_grad(cc_grad::SVector{N,T}, cv_grad::SVector{N,T}, id::Int64) where {N,T<:AbstractFloat}
   if (id == 1)
     return cc_grad
   elseif (id == 2)
@@ -50,99 +78,83 @@ function mid_grad(cc_grad, cv_grad, id)
   end
 end
 
-# function for computing line segment between points (x1,y1) & (x2,y2)
-function line_seg(x,x1,y1,x2,y2)
-   if (x2-x1) == 0.0
+"""
+    line_seg(x0::T,x1::T,y1::T,x2::T,y2::T)
+
+Calculates the value of the line segment between `(x1,y1)` and `(x2,y2)` at `x = x0`.
+"""
+function line_seg(x0::T,x1::T,y1::T,x2::T,y2::T) where {T<:AbstractFloat}
+   if (x2-x1) == zero(T)
      return y1
    else
-     return y1*((x2-x)/(x2-x1)) + y2*((x-x1)/(x2-x1))
+     return y1*((x2-x0)/(x2-x1)) + y2*((x0-x1)/(x2-x1))
    end
 end
-function dline_seg(x,x1,y1,x2,y2)
+
+"""
+    dline_seg(x0::T,x1::T,y1::T,x2::T,y2::T)
+
+Calculates the value of the slope line segment between `(x1,y1)` and `(x2,y2)`.
+"""
+function dline_seg(x0::T,x1::T,y1::T,x2::T,y2::T) where {T<:AbstractFloat}
     return (y2-y1)/(x2-x1)
 end
-function grad_calc(cv,cc,int1,int2,dcv,dcc)
-  cv_grad = dcv*( int1==1 ? cv :( int1==2 ? cv : zeros(cv)))
-  cc_grad = dcc*( int2==1 ? cc :( int2==2 ? cc : zeros(cv)))
+
+"""
+    grad_calc(cv::T,cc::T,int1::Int64,int2::Int64,dcv::SVector{N,T},dcc::SVector{N,T}) where {N,T}
+
+(Sub)gradient calculation function. Takes the convex gradient, 'cv', the
+concave gradient, 'cc', the mid index values 'int1,int2', and the derivative of
+the convex and concave envelope functions 'dcv,dcc'.
+"""
+function grad_calc(cv::SVector{N,T},cc::SVector{N,T},int1::Int64,int2::Int64,dcv::T,dcc::T) where {N,T<:AbstractFloat}
+  cv_grad::SVector{N,T} = dcv*( int1==1 ? cv :( int1==2 ? cv : zeros(cv)))
+  cc_grad::SVector{N,T} = dcc*( int2==1 ? cc :( int2==2 ? cc : zeros(cv)))
   return cv_grad, cc_grad
 end
 
 """
---------------------------------------------------------------------------------
-Function: tighten_subgrad
---------------------------------------------------------------------------------
-Description:
-Tightens the interval bounds using subgradients.
---------------------------------------------------------------------------------
-Inputs:
-cc         Float64 - concave bound
-cv         Float64 - convex bound
-cc_grad    SVector{N,Float64} - subgradient/gradient of concave bound
-cv_grad    SVector{N,Float64} - subgradient/gradient of convex bound
-Xintv      Interval - Interval domain of function
-Xbox       IntervalBox - Original decision variable bounds
-xref       Vector{Float64} - Reference point in Xbox
---------------------------------------------------------------------------------
-Returns:
-The updated interval.
---------------------------------------------------------------------------------
+    tighten_subgrad(cc,cv,cc_grad,cv_grad,Xintv,Xbox,xref)
+
+Tightens the interval bounds using subgradients. Inputs:
+* `cc::T`: concave bound
+* `cv::T`: convex bound
+* `cc_grad::SVector{N,T}`: subgradient/gradient of concave bound
+* `cv_grad::SVector{N,T}`: subgradient/gradient of convex bound
+* `Xintv::Interval{T}`: Interval domain of function
+* `Xbox::Vector{Interval{T}}`: Original decision variable bounds
+* `xref::Vector{T}`: Reference point in Xbox
 """
-function tighten_subgrad(cc,cv,cc_grad,cv_grad,Xintv,Xbox,xref)
-  if (length(Xbox)>0)
-    upper_refine = cc
-    lower_refine = cv
+function tighten_subgrad(cc::T,cv::T,cc_grad::SVector{N,T},cv_grad::SVector{N,T},
+                         Xintv::Interval{T},Xbox::Vector{Interval{T}},xref::Vector{T}) where {N,T<:AbstractFloat}
+  if (length(Xbox)>0 && Xbox[1]!=∅)
+    upper_refine::Interval{T} = Interval{T}(cc)
+    lower_refine::Interval{T} = Interval{T}(cv)
     for i=1:length(Xbox)
       upper_refine = upper_refine + cc_grad[i]*(Xbox[i]-xref[i])
       lower_refine = lower_refine + cv_grad[i]*(Xbox[i]-xref[i])
     end
-    return Interval(max(lower_refine.lo,Xintv.lo),min(upper_refine.hi,Xintv.hi))
+    return Interval{T}(max(lower_refine.lo,Xintv.lo),min(upper_refine.hi,Xintv.hi))
   else
     return Xintv
   end
 end
 
 """
---------------------------------------------------------------------------------
-Function: cut_bnds
---------------------------------------------------------------------------------
-Description:
-Cuts the relaxations using the interval bounds
---------------------------------------------------------------------------------
-Inputs:
-cc         Float64 - concave bound
-cv         Float64 - convex bound
-cc_grad    SVector{N,Float64} - subgradient/gradient of concave bound
-cv_grad    SVector{N,Float64} - subgradient/gradient of convex bound
-Intv       Interval - Interval domain of function
---------------------------------------------------------------------------------
-Returns:
-The updated tuple (cc,cv,cc_grad,cv_grad).
---------------------------------------------------------------------------------
+    outer_rnd!(Intv::Interval{T})
+
+Outer rounds the interval `Intv` by `MC_param.outer_param`.
 """
-function cut_bnds(cc,cv,cc_grad,cv_grad,Intv)
-  if (cc > Intv.hi)
-    cc = Intv.hi
-    cc_grad = zero(cc_grad)
-  end
-  if (cv < Intv.lo)
-    cv = Intv.lo
-    cv_grad = zero(cc_grad)
-  end
-  return cc,cv,cc_grad,cv_grad
+function outer_rnd(Intv::Interval{T}) where {T<:AbstractFloat}
+  return Interval{T}(Intv.lo-MC_param.outer_param, Intv.hi+MC_param.outer_param)
 end
 
-function outer_rnd(Intv)
-  return Interval(Intv.lo-MC_param.outer_param,Intv.hi+MC_param.outer_param)
-end
+"""
+    isequal(x::S,y::S,atol::T,rtol::T)
 
-function isequal(x,y,atol,rtol)
-  dist = abs(x-y)
-  avg = 0.5*abs(x+y)
-  return (dist < (atol + avg*rtol))
-end
-
-function seed_g(n,j)
-    temp = zeros(n)
-    temp[j] = 1.0
-    return SVector{n}(temp)
+Checks that `x` and `y` are equal to with absolute tolerance `atol` and relative
+tolerance `rtol`.
+"""
+function isequal(x::S,y::S,atol::T,rtol::T) where {S,T<:AbstractFloat}
+  return (abs(x-y) < (atol + 0.5*abs(x+y)*rtol))
 end
