@@ -9,7 +9,7 @@ end
   if (xL>=zero(T))
     return sinh(x),cosh(x)
   elseif (xU<=zero(T))
-    return line_seg(x,xL,sinh(xL),xU,sinh(xU)),dline_seg(x,xL,sinh(xL),xU,sinh(xU))
+    return line_seg(x,xL,sinh(xL),xU,sinh(xU)),dline_seg(x,xL,sinh(xL),xU,sinh(xU),cosh(x))
   else
     try
       p = newton(xL,xL,zero(T),sinh_env,sinh_envd,xU,zero(T))
@@ -21,14 +21,14 @@ end
     if (x>p)
       return sinh(x),cosh(x)
     else
-      return line_seg(x,p,sinh(p),xU,sinh(xU)),dline_seg(x,p,sinh(p),xU,sinh(xU))
+      return line_seg(x,p,sinh(p),xU,sinh(xU)),dline_seg(x,p,sinh(p),xU,sinh(xU),cosh(x))
     end
   end
 end
 @inline function cc_sinh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   p::T = zero(T)
   if (xL>=zero(T))
-    return line_seg(x,xL,sinh(xL),xU,sinh(xU)),dline_seg(x,xL,sinh(xL),xU,sinh(xU))
+    return line_seg(x,xL,sinh(xL),xU,sinh(xU)),dline_seg(x,xL,sinh(xL),xU,sinh(xU),cosh(x))
   elseif (xU<=zero(T))
     return sinh(x),cosh(x)
   else
@@ -40,7 +40,7 @@ end
       end
     end
     if (x>p)
-      return line_seg(x,xL,sinh(xL),p,sinh(p))
+      return line_seg(x,xL,sinh(xL),p,sinh(p)),dline_seg(x,xL,sinh(xL),p,sinh(p),cosh(x))
     else
       return sinh(x),cosh(x)
     end
@@ -76,7 +76,7 @@ end
 @inline function cv_asinh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   p::T = zero(T)
   if (xL>=zero(T))
-    return line_seg(x,xL,asinh(xL),xU,asinh(xU)),dline_seg(x,xL,asinh(xL),xU,asinh(xU))
+    return line_seg(x,xL,asinh(xL),xU,asinh(xU)),dline_seg(x,xL,asinh(xL),xU,asinh(xU),one(T)/sqrt(x^2+one(T)))
   elseif (xU<=zero(T))
     return asinh(x),one(T)/sqrt(x^2+one(T))
   else
@@ -90,7 +90,7 @@ end
     if (x<=p)
       return asinh(x),one(T)/sqrt(x^2+one(T))
     else
-      return line_seg(x,p,asinh(p),xU,asinh(xU)),dline_seg(x,p,asinh(p),xU,asinh(xU))
+      return line_seg(x,p,asinh(p),xU,asinh(xU)),dline_seg(x,p,asinh(p),xU,asinh(xU),one(T)/sqrt(x^2+one(T)))
     end
   end
 end
@@ -99,7 +99,7 @@ end
   if (xL>=zero(T))
     return asinh(x),one(T)/sqrt(x^2+one(T))
   elseif (xU<=zero(T))
-    return line_seg(x,xL,asinh(xL),xU,asinh(xU)),dline_seg(x,xL,asinh(xL),xU,asinh(xU))
+    return line_seg(x,xL,asinh(xL),xU,asinh(xU)),dline_seg(x,xL,asinh(xL),xU,asinh(xU),one(T)/sqrt(x^2+one(T)))
   else
     try
       p = newton(xU/2,zero(x),xU,asinh_env,asinh_envd,xL,xU)
@@ -109,7 +109,7 @@ end
       end
     end
     if (x<=p)
-      return line_seg(x,xL,asinh(xL),p,asinh(p)),dline_seg(x,xL,asinh(xL),p,asinh(p))
+      return line_seg(x,xL,asinh(xL),p,asinh(p)),dline_seg(x,xL,asinh(xL),p,asinh(p),one(T)/sqrt(x^2+one(T)))
     else
       return asinh(x),one(T)/sqrt(x^2+one(T))
     end
@@ -145,7 +145,7 @@ end
 @inline function cv_tanh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   p::T = zero(T)
   if (xL>=zero(T))
-    return line_seg(x,xL,tanh(xL),xU,tanh(xU)),dline_seg(x,xL,tanh(xL),xU,tanh(xU))
+    return line_seg(x,xL,tanh(xL),xU,tanh(xU)),dline_seg(x,xL,tanh(xL),xU,tanh(xU),sech(x)^2)
   elseif (xU<=zero(T))
     return tanh(x),sech(x)^2
   else
@@ -159,7 +159,7 @@ end
     if (x<=p)
       return tanh(x),sech(x)^2
     else
-      return line_seg(x,p,tanh(p),xU,tanh(xU)),dline_seg(x,p,tanh(p),xU,tanh(xU))
+      return line_seg(x,p,tanh(p),xU,tanh(xU)),dline_seg(x,p,tanh(p),xU,tanh(xU),sech(x)^2)
     end
   end
 end
@@ -168,7 +168,7 @@ end
   if (xL>=zero(T))
     return tanh(x),sech(x)^2
   elseif (xU<=zero(T))
-    return line_seg(x,xL,tanh(xL),xU,tanh(xU)),dline_seg(x,xL,tanh(xL),xU,tanh(xU))
+    return line_seg(x,xL,tanh(xL),xU,tanh(xU)),dline_seg(x,xL,tanh(xL),xU,tanh(xU),sech(x)^2)
   else
     try
       p = newton(xU/2,zero(T),xU,tanh_env,tanh_envd,xL,xU)
@@ -178,7 +178,7 @@ end
       end
     end
     if (x<=p)
-      return line_seg(x,xL,tanh(xL),p,tanh(p)),dline_seg(x,xL,tanh(xL),p,tanh(p))
+      return line_seg(x,xL,tanh(xL),p,tanh(p)),dline_seg(x,xL,tanh(xL),p,tanh(p),sech(x)^2)
     else
       return tanh(x),sech(x)^2
     end
@@ -216,7 +216,7 @@ end
   if (xL>=zero(T))
     return atanh(x),one(T)/(one(T)-x^2)
   elseif (xU<=zero(T))
-    return line_seg(x,xL,atanh(xL),xU,atanh(xU)),dline_seg(x,xL,atanh(xL),xU,atanh(xU))
+    return line_seg(x,xL,atanh(xL),xU,atanh(xU)),dline_seg(x,xL,atanh(xL),xU,atanh(xU),one(T)/(one(T)-x^2))
   else
     try
       p = newton(xU,zero(T),xU,atanh_env,atanh_envd,xL,xU)
@@ -228,14 +228,14 @@ end
     if (x>p)
       return atanh(x),one(T)/(one(T)-x^2)
     else
-      return line_seg(x,p,atanh(p),xU,atanh(xU)),dline_seg(x,p,atanh(p),xU,atanh(xU))
+      return line_seg(x,p,atanh(p),xU,atanh(xU)),dline_seg(x,p,atanh(p),xU,atanh(xU),one(T)/(one(T)-x^2))
     end
   end
 end
 @inline function cc_atanh(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   p::T = zero(T)
   if (xL>=zero(T))
-    return line_seg(x,xL,atanh(xL),xU,atanh(xU)),dline_seg(x,xL,atanh(xL),xU,atanh(xU))
+    return line_seg(x,xL,atanh(xL),xU,atanh(xU)),dline_seg(x,xL,atanh(xL),xU,atanh(xU),one(T)/(one(T)-x^2))
   elseif (xU<=zero(T))
     return atanh(x),one(T)/(one(T)-x^2)
   else
@@ -247,7 +247,7 @@ end
       end
     end
     if (x>p)
-      return line_seg(x,xU,atanh(xU),p,atanh(p)),dline_seg(x,xU,atanh(xU),p,atanh(p))
+      return line_seg(x,xU,atanh(xU),p,atanh(p)),dline_seg(x,xU,atanh(xU),p,atanh(p),one(T)/(one(T)-x^2))
     else
       return atanh(x),one(T)/(one(T)-x^2)
     end

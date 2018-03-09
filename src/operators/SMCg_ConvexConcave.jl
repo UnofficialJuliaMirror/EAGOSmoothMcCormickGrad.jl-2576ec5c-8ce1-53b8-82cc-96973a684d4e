@@ -1,5 +1,5 @@
 function exp_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,exp(xL),xU,exp(xU)),dline_seg(x,xL,exp(xL),xU,exp(xU))
+  return line_seg(x,xL,exp(xL),xU,exp(xU)),dline_seg(x,xL,exp(xL),xU,exp(xU),exp(x))
 end
 function exp_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return exp(x),exp(x)
@@ -26,7 +26,7 @@ function exp(x::SMCg{N,T}) where {N,T<:AbstractFloat}
 end
 
 function exp2_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,exp2(xL),xU,exp2(xU)),dline_seg(x,xL,exp2(xL),xU,exp2(xU))
+  return line_seg(x,xL,exp2(xL),xU,exp2(xU)),dline_seg(x,xL,exp2(xL),xU,exp2(xU),exp2(x)*log(2))
 end
 function exp2_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return exp2(x),exp2(x)*log(2)
@@ -53,7 +53,7 @@ function exp2(x::SMCg{N,T}) where {N,T<:AbstractFloat}
 end
 
 function exp10_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,exp10(xL),xU,exp10(xU)),dline_seg(x,xL,exp10(xL),xU,exp10(xU))
+  return line_seg(x,xL,exp10(xL),xU,exp10(xU)),dline_seg(x,xL,exp10(xL),xU,exp10(xU),exp10(x)*log(10))
 end
 function exp10_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return exp10(x),exp10(x)*log(10)
@@ -83,7 +83,7 @@ function sqrt_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return sqrt(x),one(T)/(2*sqrt(x))
 end
 function sqrt_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,sqrt(xL),xU,sqrt(xU)),dline_seg(x,xL,sqrt(xL),xU,sqrt(xU))
+  return line_seg(x,xL,sqrt(xL),xU,sqrt(xU)),dline_seg(x,xL,sqrt(xL),xU,sqrt(xU),one(T)/(2*sqrt(x)))
 end
 function sqrt(x::SMCg{N,T}) where {N,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
@@ -110,7 +110,7 @@ function log_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return log(x),one(T)/x
 end
 function log_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,log(xL),xU,log(xU)),dline_seg(x,xL,log(xL),xU,log(xU))
+  return line_seg(x,xL,log(xL),xU,log(xU)),dline_seg(x,xL,log(xL),xU,log(xU),one(T)/x)
 end
 function log(x::SMCg{N,T}) where {N,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
@@ -137,7 +137,7 @@ function log2_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return log2(x),one(T)/(log(2)*x)
 end
 function log2_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,log2(xL),xU,log2(xU)),dline_seg(x,xL,log2(xL),xU,log2(xU))
+  return line_seg(x,xL,log2(xL),xU,log2(xU)),dline_seg(x,xL,log2(xL),xU,log2(xU),one(T)/(log(2)*x))
 end
 function log2(x::SMCg{N,T}) where {N,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
@@ -164,7 +164,7 @@ function log10_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return log10(x),one(T)/(log(10)*x)
 end
 function log10_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,log10(xL),xU,log10(xU)),dline_seg(x,xL,log10(xL),xU,log10(xU))
+  return line_seg(x,xL,log10(xL),xU,log10(xU)),dline_seg(x,xL,log10(xL),xU,log10(xU),one(T)/(log(10)*x))
 end
 function log10(x::SMCg{N,T}) where {N,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
@@ -191,7 +191,7 @@ function acosh_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return acosh(x),one(T)/sqrt(x^2 - one(T))
 end
 function acosh_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,acosh(xL),xU,acosh(xU)),dline_seg(x,xL,acosh(xL),xU,acosh(xU))
+  return line_seg(x,xL,acosh(xL),xU,acosh(xU)),dline_seg(x,xL,acosh(xL),xU,acosh(xU),one(T)/sqrt(x^2 - one(T)))
 end
 function acosh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
@@ -222,10 +222,15 @@ function abs_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   end
 end
 function abs_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  return line_seg(x,xL,abs(xL),xU,abs(xU)),dline_seg(x,xL,abs(xL),xU,abs(xU))
+  if (x>=zero(x))
+    d = (MC_param.mu+1)*(x/xU)^MC_param.mu
+  else
+    d = -(MC_param.mu+1)*(x/xL)^MC_param.mu
+  end
+  return line_seg(x,xL,abs(xL),xU,abs(xU)),dline_seg(x,xL,abs(xL),xU,abs(xU),d)
 end
 function abs_cc_NS(x::T,lo::T,hi::T) where {T<:AbstractFloat}
-  return line_seg(x,lo,abs(lo),hi,abs(hi)),dline_seg(x,lo,abs(lo),hi,abs(hi))
+  return line_seg(x,lo,abs(lo),hi,abs(hi)),dline_seg(x,lo,abs(lo),hi,abs(hi),sign(x))
 end
 function abs_cv_NS(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return abs(x),sign(x)
@@ -258,7 +263,7 @@ function cosh_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   cosh(x),-sinh(x)
 end
 function cosh_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
-  line_seg(x,xL,cosh(xL),xU,cosh(xU)),dline_seg(x,xL,cosh(xL),xU,cosh(xU))
+  line_seg(x,xL,cosh(xL),xU,cosh(xU)),dline_seg(x,xL,cosh(xL),xU,cosh(xU),-sinh(x))
 end
 function cosh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
   eps_min::T,blank = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))

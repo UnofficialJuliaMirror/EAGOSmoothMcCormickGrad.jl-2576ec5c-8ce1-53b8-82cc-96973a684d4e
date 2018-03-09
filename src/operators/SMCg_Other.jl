@@ -5,7 +5,7 @@
   elseif (xL>=zero(xL))
     return one(T),zero(T)
   elseif (x>=zero(x))
-    return (x/xU)^2.0,2.0*x/xU^2.0
+    return (x/xU)^2,2*x/xU^2
   else
     return zero(T),zero(T)
   end
@@ -18,7 +18,7 @@ end
   elseif (x>=zero(T))
      return one(T),zero(T)
   else
-    return one(T)-(x/xL)^2.0,-2.0*x/xL^2.0
+    return one(T)-(x/xL)^2,-2*x/xL^2
   end
 end
 @inline function cv_step_NS(x::T,xL::T,xU::T) where {T<:AbstractFloat}

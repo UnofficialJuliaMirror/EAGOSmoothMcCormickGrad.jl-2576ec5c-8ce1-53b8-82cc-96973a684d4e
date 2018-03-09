@@ -3,12 +3,12 @@ function cv_negpowpos(x::T,xL::T,xU::T,n::Integer) where {T<:AbstractFloat}
   return x^n,n*x^(n-1)
 end
 function cc_negpowpos(x::T,xL::T,xU::T,n::Integer) where {T<:AbstractFloat}
-  return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n)
+  return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n,n*x^(n-1))
 end
 # convex/concave relaxation of integer powers of 1/x for negative reals
 @inline function cv_negpowneg(x::T,xL::T,xU::T,n::Integer) where {T<:AbstractFloat}
   if (isodd(n))
-    return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n)
+    return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n,n*x^(n-1))
   else
     return x^n,n*x^(n-1)
   end
@@ -17,7 +17,7 @@ end
   if (isodd(n))
     return x^n,n*x^(n-1)
   else
-    return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n)
+    return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n,n*x^(n-1))
   end
 end
 # convex/concave relaxation of even powers greater than or equal to 4
@@ -25,12 +25,12 @@ end
   return x^n,n*x^(n-1)
 end
 @inline function cc_pow4(x::T,xL::T,xU::T,n::Integer) where {T<:AbstractFloat}
-  return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n)
+  return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n,n*x^(n-1))
 end
 # convex/concave relaxation of odd powers
 @inline function cv_powodd(x::T,xL::T,xU::T,n::Integer) where {T<:AbstractFloat}
           if (xU<=zero(T))
-             return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n)
+             return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n,n*x^(n-1))
           elseif (zero(T)<=xL)
             return x^n,n*x^(n-1)
           else
@@ -43,7 +43,7 @@ end
   if (xU<=zero(T))
     return x^n,n*x^(n-1)
   elseif (zero(T)<=xL)
-    return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n)
+    return line_seg(x,xL,xL^n,xU,xU^n),dline_seg(x,xL,xL^n,xU,xU^n,n*x^(n-1))
   else
     val::T = (xU^n)*(x-xL)/(xU-xL)+(min(zero(T),x))^n
     dval::T = (xU^n)/(xU-xL)+n*(min(zero(T),x))^(n-1)

@@ -63,9 +63,6 @@ function set_default!(x::mc_opts)
   x.aff_correct_eps = 1E-12
 end
 
-#=
-type Inplace_Sto{T,N} where {N<:Integer,T}
-  Y::SparseMatrixCSC{T,N}
-  J::SparseMatrixCSC{T,N}
+
+type Inplace_Sto
 end
-=#

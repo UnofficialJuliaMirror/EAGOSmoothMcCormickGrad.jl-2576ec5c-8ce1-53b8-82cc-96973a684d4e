@@ -12,6 +12,7 @@ end
 function Final_Cut(x_mc::SMCg,x_mc_int::SMCg)
   if (MC_param.mu < 1)
     Intv::Interval = x_mc.Intv ∩ x_mc_int.Intv
+    println("Final Cut #1 Intv: ", Intv)
     if (x_mc.cc <= x_mc_int.cc)
       cc = x_mc.cc
       cc_grad = x_mc.cc_grad
@@ -26,8 +27,13 @@ function Final_Cut(x_mc::SMCg,x_mc_int::SMCg)
       cv = x_mc_int.cv
       cv_grad = x_mc_int.cv_grad
     end
+    println("Final Cut #2 cc: ", cc)
+    println("Final Cut #2 cv: ", cv)
+    println("Final Cut #2 cc_grad: ", cc_grad)
+    println("Final Cut #2 cv_grad: ", cv_grad)
     x_mc = SMCg(cc,cv,cc_grad,cv_grad,Intv,x_mc.cnst,x_mc.IntvBox,x_mc.xref)
   else
+    println("Smooth_Cut Branch")
     x_mc = Smooth_Cut(x_mc,x_mc_int)
   end
   return x_mc

@@ -11,13 +11,21 @@
         end
 end
 @inline function cc_max(x::T,xL::T,xU::T,a::S) where {S,T<:AbstractFloat}
-        return line_seg(x,xL,max(xL,a),xU,max(xU,a)),dline_seg(x,xL,max(xL,a),xU,max(xU,a))
+  ca::T = convert(T,a)
+  if (xU<=ca)
+    d = zero(T)
+  elseif (ca<=xL)
+    d = one(T)
+  else
+    d = ((xU-ca)/(xU-ca))*(MC_param.mu+1)*(max(ca,((x-ca)/(xU-ca))))^(MC_param.mu)
+  end
+  return line_seg(x,xL,max(xL,a),xU,max(xU,a)),dline_seg(x,xL,max(xL,a),xU,max(xU,a),d)
 end
 function cc_max_NS(x::T,lo::T,hi::T,c::S) where {S,T<:AbstractFloat}
-  return line_seg(x,lo,max(lo,c),hi,max(hi,c)),dline_seg(x,lo,max(lo,c),hi,max(hi,c))
+  return line_seg(x,lo,max(lo,c),hi,max(hi,c)),dline_seg(x,lo,max(lo,c),hi,max(hi,c),step(x-c))
 end
 function cv_max_NS(x::T,xL::T,xU::T,c::S) where {S,T<:AbstractFloat}
-  return max(x,c),max(1,0)
+  return max(x,c),step(x-c)
 end
 
 for i in union(int_list, float_list)

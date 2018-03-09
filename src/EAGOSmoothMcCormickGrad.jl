@@ -10,21 +10,45 @@ mutable struct McCormickParamters
   env_tol # Adjusted
   mu # Adjusted
   valid_check # Adjusted
+  valid_tol
   subgrad_refine # Adjusted
   multivar_refine # Adjusted
   mv_tol # Adjusted
   outer_rnding # Adjusted
   outer_param # Adjusted
-  McCormickParamters() = new(100,1E-10,0,true,false,false,1E-15,false,0.0)
+  McCormickParamters() = new(100,
+                             1E-10,
+                             0,
+                             false,
+                             1E-8,
+                             false,
+                             false,
+                             1E-15,
+                             false,
+                             0.0)
 end
 
 const MC_param = McCormickParamters()
 
-
 flt_un = Union{Float16,Float32,Float64}
 
 #abstract type AbstractMC <: Real end
-"""SMC is the smooth McCormick structure consisting of a concave relaxation field, cc, a convex relaxation field, cv, and a interval field, Intv.
+"""
+    SMCg{N,T<:AbstractFloat}
+
+`SMCg` is the smooth McCormick (w/ gradient) structure which is used to overload
+standard calculations. The fields are:
+* `cc::T`: Concave relaxation
+* `cv::T`: Convex relaxation
+* `cc_grad::SVector{N,T}`: (Sub)gradient of concave relaxation
+* `cv_grad::SVector{N,T}`: (Sub)gradient of convex relaxation
+* `Intv::Interval{T}`: Interval bounds
+* `cnst::Bool`: Flag for whether the bounds are constant
+* `IntvBox::Vector{Interval{T}}`: Decision space constraints for the affine interval bound tightening
+* `xref::Vector{T}`: Reference point for affine interval bound tightening
+Affine interval bound tightening is included in the constructor. As well, as a
+validity check options and the cut operator is included if the differentiability
+is set to nonsmooth.
 """
 struct SMCg{N,T<:AbstractFloat} <: Real
   cc::T
@@ -56,11 +80,11 @@ struct SMCg{N,T<:AbstractFloat} <: Real
       end
     end
     if MC_param.valid_check
-      if (cc1<cv1)
+      if ((cc1+MC_param.valid_tol)<cv1)
         error("cc must be greater than or equal to cv. cc is $cc1. cv is $cv1")
-      elseif (cc1>Intv1.hi)
+      elseif ((cc1-MC_param.valid_tol)>Intv1.hi)
         error("cc must be less than or equal to upper interval bound. cc is $cc1. Intv.hi is $(Intv1.hi)")
-      elseif (cv1<Intv1.lo)
+      elseif ((cv1+MC_param.valid_tol)<Intv1.lo)
         error("cv must be greater than or equal to lower interval bound. cv is $cv1. cv is $(Intv1.lo)")
       end
     end

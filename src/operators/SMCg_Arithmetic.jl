@@ -98,14 +98,15 @@ function cc_sqr(xMC1::T,xL::T,xU::T) where {T<:AbstractFloat}
 end
 
 function sqr_cc_NS(x::T,lo::T,hi::T) where {T<:AbstractFloat}
-  return line_seg(x,lo,lo^2,hi,hi^2),dline_seg(x,lo,lo^2,hi,hi^2)
+  return line_seg(x,lo,lo^2,hi,hi^2),dline_seg(x,lo,lo^2,hi,hi^2,2*x)
 end
 function sqr_cv_NS(x::T,lo::T,hi::T) where {T<:AbstractFloat}
   return x^2,2*x
 end
 function sqr(x::SMCg{N,T}) where {N,T<:AbstractFloat}
-  eps_min,blank = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))
-  eps_max = ifelse((abs(x.Intv.lo)>=abs(x.Intv.hi)),x.Intv.lo,x.Intv.hi)
+  	println("ran sqr MC")
+  	eps_min,blank = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))
+  	eps_max = ifelse((abs(x.Intv.lo)>=abs(x.Intv.hi)),x.Intv.lo,x.Intv.hi)
 	midcc,cc_id = mid3(x.cc,x.cv,eps_max)
 	midcv,cv_id = mid3(x.cc,x.cv,eps_min)
 	if (MC_param.mu >= 1)
@@ -118,10 +119,15 @@ function sqr(x::SMCg{N,T}) where {N,T<:AbstractFloat}
 		cv_grad = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
 		cc_grad = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
 	else
+		println("ran nonsmooth sqr")
 		cc,dcc = sqr_cc_NS(midcc,x.Intv.lo,x.Intv.hi)
 		cv,dcv = sqr_cv_NS(midcv,x.Intv.lo,x.Intv.hi)
+		println("cc,dcc: ", cc, " ", dcc)
+		println("cv,dcv: ", cv, " ", dcv)
 		cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
 		cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+		println("cc_grad: ", cc_grad)
+		println("cv_grad: ", cv_grad)
 	end
   return SMCg{N,T}(cc, cv, cc_grad, cv_grad, x.Intv^2, x.cnst, x.IntvBox,x.xref)
 end

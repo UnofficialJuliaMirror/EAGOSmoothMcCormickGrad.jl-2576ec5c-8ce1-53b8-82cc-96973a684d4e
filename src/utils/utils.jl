@@ -94,10 +94,15 @@ end
 """
     dline_seg(x0::T,x1::T,y1::T,x2::T,y2::T)
 
-Calculates the value of the slope line segment between `(x1,y1)` and `(x2,y2)`.
+Calculates the value of the slope line segment between `(x1,y1)` and `(x2,y2)`
+defaults to evaluating the derivative of the function if the interval is tight.
 """
-function dline_seg(x0::T,x1::T,y1::T,x2::T,y2::T) where {T<:AbstractFloat}
-    return (y2-y1)/(x2-x1)
+function dline_seg(x0::T,x1::T,y1::T,x2::T,y2::T,d::T) where {T<:AbstractFloat}
+    if (x2 == x1)
+      return d
+    else
+      return (y2-y1)/(x2-x1)
+    end
 end
 
 """
