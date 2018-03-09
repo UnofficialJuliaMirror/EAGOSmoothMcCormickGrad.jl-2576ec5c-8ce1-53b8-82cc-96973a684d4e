@@ -9,6 +9,8 @@ function Smooth_Cut(x_mc::SMCg,x_mc_int::SMCg)
   return x_mc
 end
 
+"""
+"""
 function Final_Cut(x_mc::SMCg,x_mc_int::SMCg)
   if (MC_param.mu < 1)
     Intv::Interval = x_mc.Intv ∩ x_mc_int.Intv
@@ -39,6 +41,8 @@ function Final_Cut(x_mc::SMCg,x_mc_int::SMCg)
   return x_mc
 end
 
+"""
+"""
 function Rnd_Out_Z_Intv(z_mct,epsv)
   return [SMCg(z_mct[i].cc,z_mct[i].cv,
              z_mct[i].cc_grad, z_mct[i].cv_grad,
@@ -46,6 +50,8 @@ function Rnd_Out_Z_Intv(z_mct,epsv)
              z_mct[i].cnst, z_mct[i].IntvBox,z_mct[i].xref) for i=1:length(z_mct)]
 end
 
+"""
+"""
 function Rnd_Out_Z_All(z_mct,epsv)
   return [SMCg(z_mct[i].cc+epsv,z_mct[i].cv-epsv,
              z_mct[i].cc_grad, z_mct[i].cv_grad,
@@ -53,6 +59,8 @@ function Rnd_Out_Z_All(z_mct,epsv)
              z_mct[i].cnst, z_mct[i].IntvBox,z_mct[i].xref) for i=1:length(z_mct)]
 end
 
+"""
+"""
 function Rnd_Out_H_Intv(z_mct,Y_mct,epsv)
   temp1 = [SMCg(z_mct[i].cc+epsv,z_mct[i].cv-epsv,
              z_mct[i].cc_grad, z_mct[i].cv_grad,
@@ -65,6 +73,8 @@ function Rnd_Out_H_Intv(z_mct,Y_mct,epsv)
   return temp1,temp2
 end
 
+"""
+"""
 function Rnd_Out_H_All(z_mct,Y_mct,epsv)
   temp1 = [SMCg(z_mct[i].cc,z_mct[i].cv,
              z_mct[i].cc_grad, z_mct[i].cv_grad,

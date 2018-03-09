@@ -3,19 +3,18 @@
 
 Relaxes the implicit function determined by `h(x,p)` with `x` in `X` and `p` in
 `P`. The reference point for the affine relaxations is `pmid`. The parameters
-generated from the relaxation at `pmid` are param and the basic parameters of the
+generated from the relaxation at `pmid` are `param` and the basic parameters of the
 fixed point method are `mc_opt`.
 """
 function MC_impRelax(h::Function, hj::Function, p::Vector{SMCg{N,T}}, pmid::Vector{T},
                      X::Vector{Interval{T}}, P::Vector{Interval{T}},
-                     mc_opts::mc_opts, param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
+                     mc_opts::mc_opts,param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
 
     nx::Int64 = length(X)
     np::Int64 = length(P)
     szero::SVector{np,T} = @SVector zeros(np)
     sone::SVector{np,T} = @SVector ones(np)
     exp_opt::Vector{Any} = Any[nx,np,mc_opts.lambda]
-    sto_out = []
 
     x_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(X[i].hi,X[i].lo,szero,szero,@interval(X[i].lo,X[i].hi),true,[∅],[1.0]) for i=1:nx]
     xa_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(X[i].lo,X[i].lo,szero,szero,@interval(X[i].lo,X[i].lo),true,[∅],[1.0]) for i=1:nx]
@@ -41,7 +40,6 @@ function MC_impRelax(h::Function, hj::Function, p::Vector{SMCg{N,T}}, pmid::Vect
 
     # Begins loop to generate parameters
     for k=1:mc_opts.kmax
-
       Affine_Exp!(param[k],p_mc,pref_mc,xa_mc,xA_mc,z_mc,exp_opt)
       if mc_opts.z_rnd_all == true
         z_mc = Rnd_Out_Z_All(z_mc,mc_opts.z_rnd_all_eps)

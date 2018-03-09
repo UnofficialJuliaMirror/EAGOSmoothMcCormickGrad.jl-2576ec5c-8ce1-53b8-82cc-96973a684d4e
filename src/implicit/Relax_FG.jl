@@ -1,31 +1,43 @@
-function impRelax_f(f,h,hj,X,P,p,pmid,mc_opt,param)
-  nx::Int64 = length(X)
+"""
+    impRelax_f(f::Function,h::Function,hj::Function,X::Vector{Interval{T}},
+               P::Vector{Interval{T}},p::Vector{T},pmid::Vector{T},
+               mc_opt::mc_opts,param::Vector{Vector{SMCg{N,T}}})
+
+Relaxes the function `f(x,p)` by relaxation the state variable `x` using the implicit
+function determined by `h(x,p)` with `x` in `X` and `p` in `P`. The reference
+point for the affine relaxations is `pmid`. The parameters generated from the
+relaxation at `pmid` are `param` and the basic parameters of the fixed point
+method are `mc_opt`.
+"""
+function impRelax_f(f::Function,h::Function,hj::Function,X::Vector{Interval{T}},
+                    P::Vector{Interval{T}},p::Vector{T},pmid::Vector{T},
+                    mc_opt::mc_opts,param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
   np::Int64 = length(P)
-  szero = @SVector zeros(np)
-  sone = @SVector ones(np)
-  #exp_opt = [nx,np,lambda]
-  xL = [X[i].lo for i=1:nx]
-  xU = [X[i].hi for i=1:nx]
-  xa,xA,z = copy(param[1]),copy(param[1]),copy(param[1])
-  XP = copy(X)
-  x = [SMCg{np,Float64}(xU[i],xL[i],szero,szero,@interval(xL[i],xU[i]),true,[∅],[1.0]) for i=1:nx]
-  p_mc = [SMCg{np,Float64}(p[i],p[i],sone,sone,@interval(P[i].lo,P[i].hi),false,[∅],[1.0]) for i=1:np]
-  xpMC = MC_impRelax(h,hj,p_mc,pmid,X,P,mc_opt,param)
+  sone::SVector{np,T} = @SVector ones(np)
+  p_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(p[i],p[i],sone,sone,@interval(P[i].lo,P[i].hi),false,[∅],[1.0]) for i=1:np]
+  xpMC::Vector{SMCg{np,T}} = MC_impRelax(h,hj,p_mc,pmid,X,P,mc_opt,param)
   return f(xpMC,p_mc)
 end
 
-function impRelax_fg(f,g,h,hj,X,P,p,pmid,mc_opt,param)
-  nx::Int64 = length(X)
+"""
+    impRelax_fg(f::Function,g::Function,h::Function,hj::Function,
+                X::Vector{Interval{T}},P::Vector{Interval{T}},
+                p::Vector{T},pmid::Vector{T},
+                mc_opt::mc_opts,param::Vector{Vector{SMCg{N,T}}})
+
+Relaxes the functions `f(x,p)` and `g(x,p)` by relaxation the state variable `x`
+using the implicit function determined by `h(x,p)` with `x` in `X` and `p` in `P`.
+The reference point for the affine relaxations is `pmid`. The parameters generated
+from the relaxation at `pmid` are `param` and the basic parameters of the fixed point
+method are `mc_opt`.
+"""
+function impRelax_fg(f::Function,g::Function,h::Function,hj::Function,
+                     X::Vector{Interval{T}},P::Vector{Interval{T}},
+                     p::Vector{T},pmid::Vector{T},
+                     mc_opt::mc_opts,param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
   np::Int64 = length(P)
-  szero = @SVector zeros(np)
-  sone = @SVector ones(np)
-  #exp_opt = [nx,np,lambda]
-  xL = [X[i].lo for i=1:nx]
-  xU = [X[i].hi for i=1:nx]
-  xa,xA,z = copy(param[1]),copy(param[1]),copy(param[1])
-  XP = copy(X)
-  x = [SMCg{np,Float64}(xU[i],xL[i],szero,szero,@interval(xL[i],xU[i]),true,[∅],[1.0]) for i=1:nx]
-  p_mc = [SMCg{np,Float64}(p[i],p[i],sone,sone,@interval(P[i].lo,P[i].hi),false,[∅],[1.0]) for i=1:np]
-  xpMC = MC_impRelax(h,hj,p_mc,pmid,X,P,mc_opt,param)
+  sone::SVector{np,T} = @SVector ones(np)
+  p_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(p[i],p[i],sone,sone,@interval(P[i].lo,P[i].hi),false,[∅],[1.0]) for i=1:np]
+  xpMC::Vector{SMCg{np,T}} = MC_impRelax(h,hj,p_mc,pmid,X,P,mc_opt,param)
   return f(xpMC,p_mc),g(xpMC,p_mc)
 end
