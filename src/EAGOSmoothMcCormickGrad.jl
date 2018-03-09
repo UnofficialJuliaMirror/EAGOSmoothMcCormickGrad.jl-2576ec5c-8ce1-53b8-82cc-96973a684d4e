@@ -1,4 +1,4 @@
-#__precompile__(true)
+__precompile__(true)
 
 module EAGOSmoothMcCormickGrad
 
@@ -124,8 +124,8 @@ export tighten_subgrad, set_iterations, set_tolerance, set_diff_relax, default_o
 export set_valid_check, set_subgrad_refine, set_multivar_refine, set_outer_rnd
 export MC_param, mid_grad, seed_g, line_seg, dline_seg, outer_rnd
 
-#function __init__()
-#end
+function __init__()
+end
 
 # Initialization
 """SMC(y::Interval) initializes the differentiable McCormick object with an interval

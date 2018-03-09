@@ -16,7 +16,7 @@ Outs the following the tuple `sto_out`:
 function GenExpansionParams(h::Function, hj::Function,
                             X::Vector{Interval{T}},
                             P::Vector{Interval{T}},
-                            pmid::Vector{T},mc_opts::mc_opts) where {T<:AbstractFloat}
+                            pmid::Vector{T},mc_opts::mc_opts{T}) where {T<:AbstractFloat}
 
   nx::Int64 = length(X)
   np::Int64 = length(P)
@@ -68,7 +68,7 @@ function GenExpansionParams(h::Function, hj::Function,
     Y = (nx == 1) ? [one(T)/mid(dH_mc[1].Intv)] : mid.(Intv.(dH_mc))
 
     # applies preconditioner
-    H_mc,dH_mc = Precondition(H_mc,dH_mc,Y,nx)
+    Precondition!(H_mc,dH_mc,Y,nx)
 
     # applies parametric iteration
     if (mc_opts.style == "NewtonGS")

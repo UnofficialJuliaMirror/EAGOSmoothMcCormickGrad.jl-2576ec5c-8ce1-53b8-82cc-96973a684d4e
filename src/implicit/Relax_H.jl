@@ -1,5 +1,7 @@
 """
-    MC_impRelax(h,hj,p,pmid,X,P,mc_opts,param)
+    MC_impRelax(h::Function, hj::Function, p::Vector{SMCg{N,T}}, pmid::Vector{T},
+                X::Vector{Interval{T}}, P::Vector{Interval{T}},mc_opts::mc_opts{T},
+                param::Vector{Vector{SMCg{N,T}}})
 
 Relaxes the implicit function determined by `h(x,p)` with `x` in `X` and `p` in
 `P`. The reference point for the affine relaxations is `pmid`. The parameters
@@ -8,7 +10,7 @@ fixed point method are `mc_opt`.
 """
 function MC_impRelax(h::Function, hj::Function, p::Vector{SMCg{N,T}}, pmid::Vector{T},
                      X::Vector{Interval{T}}, P::Vector{Interval{T}},
-                     mc_opts::mc_opts,param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
+                     mc_opts::mc_opts{T},param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
 
     nx::Int64 = length(X)
     np::Int64 = length(P)
@@ -66,7 +68,7 @@ function MC_impRelax(h::Function, hj::Function, p::Vector{SMCg{N,T}}, pmid::Vect
       Y = (nx == 1) ? [one(T)/mid(dH_mc[1].Intv)] : mid.(Intv.(dH_mc))
 
       # applies preconditioner
-      H_mc,dH_mc = Precondition(H_mc,dH_mc,Y,nx)
+      Precondition!(H_mc,dH_mc,Y,nx)
 
       if mc_opts.hhj_rnd_all == true
         H_mc,dH_mc = Rnd_Out_H_All(H_mc,dH_mc,mc_opts.hhj_rnd_all_eps)

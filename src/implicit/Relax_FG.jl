@@ -1,7 +1,7 @@
 """
     impRelax_f(f::Function,h::Function,hj::Function,X::Vector{Interval{T}},
                P::Vector{Interval{T}},p::Vector{T},pmid::Vector{T},
-               mc_opt::mc_opts,param::Vector{Vector{SMCg{N,T}}})
+               mc_opt::mc_opts{T},param::Vector{Vector{SMCg{N,T}}})
 
 Relaxes the function `f(x,p)` by relaxation the state variable `x` using the implicit
 function determined by `h(x,p)` with `x` in `X` and `p` in `P`. The reference
@@ -11,7 +11,7 @@ method are `mc_opt`.
 """
 function impRelax_f(f::Function,h::Function,hj::Function,X::Vector{Interval{T}},
                     P::Vector{Interval{T}},p::Vector{T},pmid::Vector{T},
-                    mc_opt::mc_opts,param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
+                    mc_opt::mc_opts{T},param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
   np::Int64 = length(P)
   sone::SVector{np,T} = @SVector ones(np)
   p_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(p[i],p[i],sone,sone,@interval(P[i].lo,P[i].hi),false,[∅],[1.0]) for i=1:np]
@@ -34,7 +34,7 @@ method are `mc_opt`.
 function impRelax_fg(f::Function,g::Function,h::Function,hj::Function,
                      X::Vector{Interval{T}},P::Vector{Interval{T}},
                      p::Vector{T},pmid::Vector{T},
-                     mc_opt::mc_opts,param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
+                     mc_opt::mc_opts{T},param::Vector{Vector{SMCg{N,T}}}) where {N,T<:AbstractFloat}
   np::Int64 = length(P)
   sone::SVector{np,T} = @SVector ones(np)
   p_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(p[i],p[i],sone,sone,@interval(P[i].lo,P[i].hi),false,[∅],[1.0]) for i=1:np]
