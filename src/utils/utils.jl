@@ -163,3 +163,10 @@ tolerance `rtol`.
 function isequal(x::S,y::S,atol::T,rtol::T) where {S,T<:AbstractFloat}
   return (abs(x-y) < (atol + 0.5*abs(x+y)*rtol))
 end
+
+"""
+    Intv(x::SMCg{N,T})
+"""
+function Intv(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+  return x.Intv
+end

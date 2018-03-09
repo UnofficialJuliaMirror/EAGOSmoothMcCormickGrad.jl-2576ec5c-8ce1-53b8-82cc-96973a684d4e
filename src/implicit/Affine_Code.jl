@@ -17,44 +17,31 @@ Returns the tuple `(xa,xA,z)`:
 * `z::Vector{SMCg{N,T}}`: Affine function in X
 --------------------------------------------------------------------------------
 """
-function Affine_Exp!(x,p,p_ref,xa,xA,z, opt)
-  println("x: ",x)
-  println("p: ",p)
-  println("p_ref: ",p_ref)
-  println("xa: ",xa)
-  println("xA: ",xA)
-  println("z: ",z)
+function Affine_Exp!(x::Vector{SMCg{N,T}}, p::Vector{SMCg{N,T}}, p_ref::Vector{SMCg{N,T}},
+                     xa::Vector{SMCg{N,T}}, xA::Vector{SMCg{N,T}}, z::Vector{SMCg{N,T}},
+                     opt::Vector{Any}) where {N,T<:AbstractFloat}
 
-  nx,np,lambda = opt
-  S1,S2,S3 = 0.0,0.0,0.0
-  println("aff 1 pnt")
+  nx::Int64,np::Int64,lambda::Float64 = opt
+  S1::SMCg{N,T},S2::SMCg{N,T},S3::SMCg{N,T} = zero(SMCg{N,T}),zero(SMCg{N,T}),zero(SMCg{N,T})
   for i = 1:nx
-   S1 = 0.0
-   S2 = 0.0
-   S3 = 0.0
-   println("aff 2 pnt")
-   for j = 1:np
+   S1 = zero(SMCg{N,T})
+   S2 = zero(SMCg{N,T})
+   S3 = zero(SMCg{N,T})
+   for j = 1:N
       S1 = S1 + (p[j]-p_ref[j])*x[i].cv_grad[j]
       S2 = S2 + (p[j]-p_ref[j])*x[i].cc_grad[j]
       S3 = S3 + (lambda*x[i].cv_grad[j]+(1.0-lambda)*x[i].cc_grad[j])*(p[j]-p_ref[j])
    end
-   println("aff 3 pnt")
-   temp1 = x[i].cv + S1
-   temp2 = x[i].cc + S2
-   temp3 = x[i].cv_grad
-   temp4 = x[i].cc_grad
-   temp5 = lambda*x[i].cv+(1.0-lambda)*x[i].cc+S3
-   temp6 = lambda*x[i].cv_grad+(1.0-lambda)*x[i].cc_grad
-   println("aff 4 pnt")
-   cnst_xa = S1.cnst
-   cnst_xA = S2.cnst
-   cnst_z = S3.cnst
-   println("aff 5 pnt")
-   xa[i] = SMCg{nx,Float64}(temp1.cc,temp1.cv,temp3,temp3,Interval(temp1.cv,temp1.cc),cnst_xa,x[i].IntvBox,x[i].xref)
-   xA[i] = SMCg{nx,Float64}(temp2.cc,temp2.cv,temp4,temp4,Interval(temp2.cv,temp2.cc),cnst_xA,x[i].IntvBox,x[i].xref)
-   z[i] = SMCg{nx,Float64}(temp5.cc,temp5.cv,temp6,temp6,Interval(temp5.cv,temp5.cc),cnst_z,x[i].IntvBox,x[i].xref)
+   temp1::SMCg{N,T} = x[i].cv + S1
+   temp2::SMCg{N,T} = x[i].cc + S2
+   temp3::SMCg{N,T} = lambda*x[i].cv+(1.0-lambda)*x[i].cc+S3
+   xa[i] = SMCg{N,T}(temp1.cc,temp1.cv,x[i].cv_grad,x[i].cv_grad,Interval{T}(temp1.cv,temp1.cc),S1.cnst,x[i].IntvBox,x[i].xref)
+   xA[i] = SMCg{N,T}(temp2.cc,temp2.cv,x[i].cc_grad,x[i].cc_grad,Interval{T}(temp2.cv,temp2.cc),S2.cnst,x[i].IntvBox,x[i].xref)
+   z[i] = SMCg{N,T}(temp3.cc,temp3.cv,
+                    lambda*x[i].cv_grad+(1.0-lambda)*x[i].cc_grad,
+                    lambda*x[i].cv_grad+(1.0-lambda)*x[i].cc_grad,
+                    Interval{T}(temp3.cv,temp3.cc),S3.cnst,x[i].IntvBox,x[i].xref)
   end
-  return xa,xA,z
 end
 
 """

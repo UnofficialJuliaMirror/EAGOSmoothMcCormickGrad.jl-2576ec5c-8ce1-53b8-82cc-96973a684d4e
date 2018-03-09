@@ -7,6 +7,7 @@ using StaticArrays
 # sets up initial options
 opts = mc_opts()          # sets options for relaxtion
 opts.kmax = 3             # sets number of iterations
+#opts.style = "NewtonGS"   # sets style of contractor
 opts.style = "KrawczykCW"   # sets style of contractor
 
 #=
