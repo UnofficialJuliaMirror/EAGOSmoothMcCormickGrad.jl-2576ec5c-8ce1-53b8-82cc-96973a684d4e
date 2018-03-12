@@ -51,6 +51,7 @@ mc_opts(T) = mc_opts{T}(0.5,2,"KrawczykCW",
                         false,0.0,false,0.0,
                         false,0.0,false,0.0,1E-12)
 
+mc_opts() = mc_opts(Float64)
 """
     set_default!(x::mc_opts)
 
