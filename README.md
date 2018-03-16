@@ -32,7 +32,7 @@ The `SMCg{N,T}` has the following fields
 - `IntvBox::Vector{Interval{T}}`: domain of initial problem used for subgradient refinement.
 - `xref::Vector{T}`: reference point defined for affine interval tightening procedure
 
-The routine are used extensively in the (`EAGO.jl`)[https://github.com/MatthewStuber/EAGO.jl] solver.
+The routine are used extensively in the [`EAGO.jl`](https://github.com/MatthewStuber/EAGO.jl) solver.
 Please see the example files for usage cases.
 
 ## Future Work
