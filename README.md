@@ -43,9 +43,9 @@ Please see the example files for usage cases.
   Julia's automatic differentiation ecosystem.
 
 ## Related Packages
-- (**EAGO.jl**)[https://github.com/MatthewStuber/EAGO.jl]: A package containing global and robust solvers based mainly on McCormick relaxations.
+- [**EAGO.jl**](https://github.com/MatthewStuber/EAGO.jl): A package containing global and robust solvers based mainly on McCormick relaxations.
 This package supports a JuMP and MathProgBase interface.
-- (**MC++**)[https://omega-icl.github.io/mcpp/]: A mature McCormick relaxation package in C++ that also includes McCormick-Taylor, Chebyshev
+- [**MC++**](https://omega-icl.github.io/mcpp/): A mature McCormick relaxation package in C++ that also includes McCormick-Taylor, Chebyshev
 Polyhedral and Ellipsoidal arithmetics.
 
 ## References
