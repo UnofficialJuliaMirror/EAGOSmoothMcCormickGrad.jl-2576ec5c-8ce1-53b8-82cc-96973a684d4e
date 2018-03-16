@@ -1,4 +1,4 @@
-__precompile__(true)
+#__precompile__(true)
 
 module EAGOSmoothMcCormickGrad
 
@@ -141,6 +141,7 @@ end
 include("utils/utils.jl")
 include("utils/root_finding.jl")
 include("utils/set_options.jl")
+include("utils/Sparse_Conditioner.jl")
 
 include("operators/SMCg_Power.jl")
 include("operators/SMCg_Multiplication.jl")
@@ -152,7 +153,8 @@ include("operators/SMCg_Extrema.jl")
 include("operators/SMCg_Other.jl")
 
 export mc_opts, SetOptions!, MC_KrawczykCW, MC_NewtonGS, GenExpansionParams,
-       MC_impRelax, impRelax_f, impRelax_fg, set_default!
+       MC_impRelax, impRelax_f, impRelax_fg, set_default!, InGenExpansionParams,
+              MC_NimpRelax, NimpRelax_f, NimpRelax_fg
 
 include("implicit/Options.jl")
 include("implicit/Utility.jl")

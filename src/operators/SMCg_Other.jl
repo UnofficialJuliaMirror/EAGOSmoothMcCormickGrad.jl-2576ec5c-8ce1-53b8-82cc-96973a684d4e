@@ -27,7 +27,7 @@ end
   elseif (xL>=zero(T))
     return one(T),zero(T)
   elseif (x>=zero(T))
-    return line_seg(x,zero(T),zero(T),xU,one(T)),dline_seg(x,zero(T),zero(T),xU,one(T))
+    return line_seg(x,zero(T),zero(T),xU,one(T)),dline_seg(x,zero(T),zero(T),xU,one(T),1/x)
   else
     return zero(T),zero(T)
   end
@@ -40,7 +40,7 @@ end
   elseif (x>=zero(x))
      return one(T),zero(T)
   else
-    return line_seg(x,xL,zero(T),zero(T),one(T)),dline_seg(x,xL,zero(T),zero(T),one(T))
+    return line_seg(x,xL,zero(T),zero(T),one(T)),dline_seg(x,xL,zero(T),zero(T),one(T),1/x)
   end
 end
 @inline function step(x::SMCg{N,T}) where {N,T<:AbstractFloat}

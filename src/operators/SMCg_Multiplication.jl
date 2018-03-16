@@ -34,49 +34,84 @@ end
 	    term4::T,blank = mid3(beta.lo,beta.hi,ystar(alpha.hi,lambda,nu))
 	    a::T,b::Int64 = findmin([GxA(term1,beta.lo,lambda,nu),GxA(term2,beta.hi,lambda,nu),
                            GxA(alpha.lo,term3,lambda,nu),GxA(alpha.hi,term4,lambda,nu)])
-        if (b == 1)
-			  	grad::SVector{N,T} = max(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cv_grad+
+        		if (b == 1)
+					#println("gCxA trace 1")
+			  		grad::SVector{N,T} = max(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cv_grad+
 					   				 min(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cc_grad+
 					   	 			 max(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cv_grad+
 				 	   				 min(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cc_grad
+									 #println("term 1 comp: ", max(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu)))
+									 #println("term 2 comp: ", min(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu)))
+									 #println("term 3 comp: ", max(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu)))
+									 #println("term 4 comp: ", min(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu)))
+									 #println("term 1 grad: ", x1.cv_grad)
+									 #println("term 2 grad: ", x1.cc_grad)
+									 #println("term 3 grad: ", x2.cv_grad)
+									 #println("term 4 grad: ", x2.cc_grad)
+									 #println("term 1: ", max(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cv_grad)
+									 #println("term 2: ", min(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cc_grad)
+									 #println("term 3: ", max(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cv_grad)
+									# println("term 4: ", min(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cc_grad)
+
+									 #println("grad: ", grad)
+
+				    grad2::SVector{N,T} = max(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cc_grad+
+							min(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cv_grad-
+							max(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cc_grad-
+							min(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cv_grad
 				elseif (b == 2)
+					#println("gCxA trace 2")
 					grad = max(zero(T),psi_mlt_Ax(term2,beta.hi,lambda,nu))*x1.cv_grad+
 						   min(zero(T),psi_mlt_Ax(term2,beta.hi,lambda,nu))*x1.cc_grad+
 					 	   max(zero(T),psi_mlt_Ay(term2,beta.hi,lambda,nu))*x2.cv_grad+
 				 		   min(zero(T),psi_mlt_Ay(term2,beta.hi,lambda,nu))*x2.cc_grad
+				    grad2 = max(zero(T),psi_mlt_Ax(term2,beta.hi,lambda,nu))*x1.cc_grad+
+							min(zero(T),psi_mlt_Ax(term2,beta.hi,lambda,nu))*x1.cv_grad-
+							max(zero(T),psi_mlt_Ay(term2,beta.hi,lambda,nu))*x2.cc_grad-
+							min(zero(T),psi_mlt_Ay(term2,beta.hi,lambda,nu))*x2.cv_grad
 				elseif (b == 3)
+				#	println("gCxA trace 3")
 					grad = max(zero(T),psi_mlt_Ax(alpha.lo,term3,lambda,nu))*x1.cv_grad+
 						   min(zero(T),psi_mlt_Ax(alpha.lo,term3,lambda,nu))*x1.cc_grad+
 					 	   max(zero(T),psi_mlt_Ay(alpha.lo,term3,lambda,nu))*x2.cv_grad+
 				 		   min(zero(T),psi_mlt_Ay(alpha.lo,term3,lambda,nu))*x2.cc_grad
+				    grad2 = max(zero(T),psi_mlt_Ax(alpha.lo,term3,lambda,nu))*x1.cc_grad+
+							min(zero(T),psi_mlt_Ax(alpha.lo,term3,lambda,nu))*x1.cv_grad-
+							max(zero(T),psi_mlt_Ay(alpha.lo,term3,lambda,nu))*x2.cc_grad-
+							min(zero(T),psi_mlt_Ay(alpha.lo,term3,lambda,nu))*x2.cv_grad
 				else
+				#	println("gCxA trace 4")
 					grad = max(zero(T),psi_mlt_Ax(alpha.hi,term4,lambda,nu))*x1.cv_grad+
 						   min(zero(T),psi_mlt_Ax(alpha.hi,term4,lambda,nu))*x1.cc_grad+
 					 	   max(zero(T),psi_mlt_Ay(alpha.hi,term4,lambda,nu))*x2.cv_grad+
 				 		   min(zero(T),psi_mlt_Ay(alpha.hi,term4,lambda,nu))*x2.cc_grad
+				   grad2 = max(zero(T),psi_mlt_Ax(alpha.hi,term4,lambda,nu))*x1.cc_grad+
+				        	min(zero(T),psi_mlt_Ax(alpha.hi,term4,lambda,nu))*x1.cv_grad-
+							max(zero(T),psi_mlt_Ay(alpha.hi,term4,lambda,nu))*x2.cc_grad-
+							min(zero(T),psi_mlt_Ay(alpha.hi,term4,lambda,nu))*x2.cv_grad
 				end
 
-        return a,grad
+        return a,grad,grad2
 end
 
+# include correction from Khan
 function psi_mlt_Ax(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
 	term = [(y-nu.lo)/(nu.hi-nu.lo)
 	        (lambda.hi-x)/(lambda.hi-lambda.lo)]
 	return 0.5*(nu.lo+nu.hi+(MC_param.mu+1)*(nu.hi-nu.lo)*(term[1]-term[2])*abs(term[1]-term[2])^(MC_param.mu-1))
 end
+# include correction from Khan
 function psi_mlt_Ay(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
 	term = [(y-nu.lo)/(nu.hi-nu.lo)
 	        (lambda.hi-x)/(lambda.hi-lambda.lo)]
 	return 0.5*(lambda.lo+lambda.hi+(MC_param.mu+1)*(lambda.hi-lambda.lo)*(term[1]-term[2])*abs(term[1]-term[2])^(MC_param.mu-1))
 end
 function psi_mlt_Bx(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	term = [(y - nu.lo)/(nu.hi-nu.lo)
-	        (lambda.hi - x)/(lambda.hi-lambda.lo)]
+	term = [(y - nu.lo)/(nu.hi-nu.lo)  (lambda.hi - x)/(lambda.hi-lambda.lo)]
 	return nu.lo+(MC_param.mu+1)*(nu.hi-nu.lo)*max(0,term[1]-term[2])^MC_param.mu
 end
 function psi_mlt_By(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	term = [(y - nu.lo)/(nu.hi-nu.lo)
-	        (lambda.hi - x)/(lambda.hi-lambda.lo)]
+	term = [(y - nu.lo)/(nu.hi-nu.lo)  (lambda.hi - x)/(lambda.hi-lambda.lo)]
 	return lambda.lo+(MC_param.mu+1)*(lambda.hi-lambda.lo)*max(0,term[1]-term[2])^MC_param.mu
 end
 
@@ -86,35 +121,46 @@ function multiply_MV(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
 	alpha0::Interval{T} = Interval(x1.cv,x1.cc)
 	beta0::Interval{T} =  Interval(x2.cv,x2.cc)
 	if (zero(T)<=x1.Intv.lo) && (zero(T)<=x2.Intv.lo)
+		#println("MV trace A1") # TRACE ME
 		cv = GxB(x1.cv,x2.cv,x1.Intv,x2.Intv)
-		cv_grad::SVector{N,T} = x1.cv_grad*psi_mlt_Bx(x1.cv,x2.cv,x1.Intv,x2.Intv)
-						+ x2.cv_grad*psi_mlt_By(x1.cv,x2.cv,x1.Intv,x2.Intv)
+		#println("x1.cv_grad: ", x1.cv_grad)
+		#println("x2.cv_grad: ", x2.cv_grad)
+		#println("psi_mlt_Bx(x1.cv,x2.cv,x1.Intv,x2.Intv): ", psi_mlt_Bx(x1.cv,x2.cv,x1.Intv,x2.Intv))
+		#println("psi_mlt_By(x1.cv,x2.cv,x1.Intv,x2.Intv): ", psi_mlt_By(x1.cv,x2.cv,x1.Intv,x2.Intv))
+		cv_grad::SVector{N,T} = x1.cv_grad*psi_mlt_Bx(x1.cv,x2.cv,x1.Intv,x2.Intv) + x2.cv_grad*psi_mlt_By(x1.cv,x2.cv,x1.Intv,x2.Intv)
+		test1 = x1.cv_grad*psi_mlt_Bx(x1.cv,x2.cv,x1.Intv,x2.Intv) + x2.cv_grad*psi_mlt_By(x1.cv,x2.cv,x1.Intv,x2.Intv)
+		#println("cv_grad: ", cv_grad)
+		#println("test1: ", test1)
 	elseif ((x1.Intv.hi<=zero(T))) && (x2.Intv.hi<=zero(T))
+		#println("MV trace A2")
 		cv = GxB(-x1.cc,-x2.cc,-x1.Intv,-x2.Intv)
-		cv_grad = - x1.cc_grad*psi_mlt_Bx(-x1.cc,-x2.cc,-x1.Intv,-x2.Intv)
-						- x2.cc_grad*psi_mlt_By(-x1.cc,-x2.cc,-x1.Intv,-x2.Intv)
+		cv_grad = - x1.cc_grad*psi_mlt_Bx(-x1.cc,-x2.cc,-x1.Intv,-x2.Intv) - x2.cc_grad*psi_mlt_By(-x1.cc,-x2.cc,-x1.Intv,-x2.Intv)
 	else
-		cv,cv_grad = gCxA(alpha0,beta0,x1.Intv,x2.Intv,x1,x2)
+		#println("MV trace A3")
+		cv,cv_grad,temp = gCxA(alpha0,beta0,x1.Intv,x2.Intv,x1,x2)
 	end
 	if ((x1.Intv.hi<=zero(T))) && ((zero(T))<=x2.Intv.lo)
+		#println("MV trace B1")
 		cc = -GxB(-x1.cc,x2.cv,-x1.Intv,x2.Intv)
-		cc_grad::SVector{N,T} = x1.cc_grad*psi_mlt_Bx(-x1.cc,x2.cv,-x1.Intv,x2.Intv)
-						- x2.cv_grad*psi_mlt_By(-x1.cc,x2.cv,-x1.Intv,x2.Intv)
+		cc_grad::SVector{N,T} = x1.cc_grad*psi_mlt_Bx(-x1.cc,x2.cv,-x1.Intv,x2.Intv) - x2.cv_grad*psi_mlt_By(-x1.cc,x2.cv,-x1.Intv,x2.Intv)
 	elseif ((zero(T))<=x1.Intv.lo) && (x2.Intv.hi<=zero(T))
+		#println("MV trace B2")
 		cc = -GxB(x1.cv,-x2.cc,x1.Intv,-x2.Intv)
-		cc_grad = - x1.cv_grad*psi_mlt_Bx(x1.cv,-x2.cc,x1.Intv,-x2.Intv)
-							+ x2.cc_grad*psi_mlt_By(x1.cv,-x2.cc,x1.Intv,-x2.Intv)
+		cc_grad = - x1.cv_grad*psi_mlt_Bx(x1.cv,-x2.cc,x1.Intv,-x2.Intv) + x2.cc_grad*psi_mlt_By(x1.cv,-x2.cc,x1.Intv,-x2.Intv)
 	else
-		cct::T,cc_gradt::SVector{N,T} = gCxA(-alpha0,beta0,-x1.Intv,x2.Intv,x1,x2)
+		#println("MV trace B3") # TRACE ME
+		cct::T,temp,cc_gradt::SVector{N,T} = gCxA(-alpha0,beta0,-x1.Intv,x2.Intv,x1,x2)
 		cc = -cct
-		cc_grad = -cc_gradt
+		cc_grad = cc_gradt
 	end
 	if (min(x1.Intv.lo,x2.Intv.lo)<zero(T)<max(x1.Intv.hi,x2.Intv.hi))
+		#println("MV trace C1")
 		lo_Intv_calc::T,blank = gCxA(x1.Intv,x2.Intv,x1.Intv,x2.Intv,x1,x2)
 		hi_Intv_calct::T,blankt = gCxA(-x1.Intv,x2.Intv,-x1.Intv,x2.Intv,x1,x2)
 		hi_Intv_calc::T = -hi_Intv_calct
 		Intv_calc::Interval{T} = @interval(lo_Intv_calc,hi_Intv_calc)
 	else
+		#println("MV trace C2") # TRACE ME
 		Intv_calc = x1.Intv*x2.Intv
 	end
 	cnst = x2.cnst ? x1.cnst : (x1.cnst ? x2.cnst : x1.cnst || x2.cnst)
@@ -522,6 +568,7 @@ function STD_NS_ALT(x::SMCg{N,T},y::SMCg{N,T}) where {N,T<:AbstractFloat}
 end
 
 @inline function *(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
+	#println("start multiplication 1")
 	if x1 == x2
 		return sqr(x1)
 	end
@@ -530,6 +577,7 @@ end
 	degen2::Bool = ((x2.Intv.hi - x2.Intv.lo) == zero(T))
 
 	if (MC_param.mu >= 1 && ~(degen1||degen2))
+		#println("multiplication trace 1")
 		return multiply_MV(x1,x2)
 	elseif (MC_param.multivar_refine && ~(degen1||degen2))
 		if (x2.cnst)
@@ -543,8 +591,8 @@ end
 		end
 		return multiply_MV_NS(x1,x2,N,cnst) # DONE (minus gradients & case handling?)
 	elseif (x1.Intv.lo >= zero(T))
-		#return multiply_STD_NS(x1,x2)
-		return STD_NS_ALT(x1,x2)
+		return multiply_STD_NS(x1,x2)
+		#return STD_NS_ALT(x1,x2)
 	elseif (x1.Intv.hi <= zero(T))
 		if (x2.Intv.lo >= zero(T))
 			return -((-x1)*x2)
@@ -560,10 +608,10 @@ end
 	else
     if (x2.cnst)
 	  return STD_NS_ALT(x1,x2)
-      #return mul1_u1mix_u2mix(x1,x2,x1.cnst)
+#      return mul1_u1mix_u2mix(x1,x2,x1.cnst)
     elseif (x1.cnst)
 	  return STD_NS_ALT(x1,x2)
-      #return mul1_u1mix_u2mix(x2,x1,x2.cnst)
+#      return mul1_u1mix_u2mix(x2,x1,x2.cnst)
     else
 	  return STD_NS_ALT(x1,x2)
 	  #return mul2_u1mix_u2mix(x1,x2)
