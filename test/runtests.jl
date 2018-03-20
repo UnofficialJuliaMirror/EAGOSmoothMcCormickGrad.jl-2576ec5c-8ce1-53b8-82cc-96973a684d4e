@@ -6,9 +6,11 @@ println("Testing Utility Functions...")
 t = @elapsed include("Utilities.jl")
 println("done (took $t seconds).")
 
+#=
 println("Testing McCormick Operators...")
 t = @elapsed include("Operators.jl")
 println("done (took $t seconds).")
+=#
 
 #=
 println("Implicit Bounding Utilities...")
