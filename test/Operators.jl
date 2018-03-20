@@ -25,11 +25,39 @@ mBox = mid.(xIBox)
 SMCg1 = SMCg{2,Float64}(x,x,a,a,xIntv1,false,xIBox,mBox)
 
 
+################################################################################
+####################### Test Binary McCormick Operators ########################
+################################################################################
+
 # Test binary operators
 binary_list = [+,-,/,*,min,max]
 for i = 1:length(binary_list)
     push!(SMCglist_B,(binary_list[i])(SMCg1,SMCg1))
 end
+
+# tests addition
+b11 = SMCglist_B[1].cc == 2*x
+b12 = SMCglist_B[1].cv == 2*x
+b13 = SMCglist_B[1].cc_grad == 2*a
+b14 = SMCglist_B[1].cv_grad == 2*a
+b15 = SMCglist_B[1].Intv = xIntv1+xIntv1
+
+# tests subtraction
+b21 = SMCglist_B[2].cc == 0.0
+b22 = SMCglist_B[2].cv == 0.0
+b23 = SMCglist_B[2].cc_grad == zero(a)
+b24 = SMCglist_B[2].cv_grad == zero(a)
+b25 = SMCglist_B[2].Intv = xIntv1-xIntv1
+
+# tests division
+
+# test multiplication
+
+# tests minimization
+
+# tests maximization
+
+
 
 # Test unary operators
 unary_list1 = [-, sin, cos, tan, asin,
@@ -40,6 +68,13 @@ unary_list1 = [-, sin, cos, tan, asin,
 for i = 1:length(unary_list1)
     push!(SMCglist_U,(unary_list1[i])(SMCg1))
 end
+
+# test negation
+SMCglist_U[1].cc == -SMCg1.cv
+SMCglist_U[1].cv == -SMCg1.cc
+SMCglist_U[1].cc_grad == -SMCg1.cv_grad
+SMCglist_U[1].cv_grad == -SMCg1.cc_grad
+SMCglist_U[1].Intv == -SMCg1.Intv
 
 x = 2.6
 xIntv1 = Interval(2.5,2.75)
