@@ -1,7 +1,7 @@
 # EAGOSmoothMcCormickGrad.jl
 A (differentiable) McCormick Relaxation Library w/Embedded (sub)gradient
 
-[![Build Status](https://travis-ci.org/MatthewStuber/EAGOSmoothMcCormickGrad.jl.svg?branch=master)](https://travis-ci.org/MatthewStuber/EEAGOSmoothMcCormickGrad.jl)
+[![Build Status](https://travis-ci.org/MatthewStuber/EAGOSmoothMcCormickGrad.jl.svg?branch=master)](https://travis-ci.org/MatthewStuber/EAGOSmoothMcCormickGrad.jl)
 [![Coverage Status](https://coveralls.io/repos/MatthewStuber/EAGOSmoothMcCormickGrad.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/MatthewStuber/EAGOSmoothMcCormickGrad.jl?branch=master)
 [![codecov.io](http://codecov.io/github/MatthewStuber/EAGOSmoothMcCormickGrad.jl/coverage.svg?branch=master)](http://codecov.io/github/MatthewStuber/EAGOSmoothMcCormickGrad.jl?branch=master)
 
