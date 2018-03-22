@@ -56,7 +56,7 @@ function MC_KrawczykCW!(z_mc::Vector{SMCg{N,T}},x_mc::Vector{SMCg{N,T}},
         S1 = S1 + (one(T)-YdH_mc[i,j])*(x_mc[j]-z_mc[j])
       end
     end
-    x_mc[i] =  z_mc[i] - YH_mc[i] - S1
+    x_mc[i] =  z_mc[i] - YH_mc[i] + S1
     x_mc[i] = Final_Cut(x_mc[i],x_mc_int[i])
   end
 end
@@ -124,6 +124,9 @@ function MCn_KrawczykCW!(z_mc::Vector{SMCg{N,T}},x_mc::Vector{SMCg{N,T}},
       end
     end
     x_mc[i] =  z_mc[i] - YH_mc[i] - S1
+    println("x_mc[$i]: $(x_mc[i])")
+    println("S1: $(S1)")
     x_mc[i] = Final_Cut(x_mc[i],x_mc_int[i])
+    println("cut x_mc[$i]: $(x_mc[i])")
   end
 end

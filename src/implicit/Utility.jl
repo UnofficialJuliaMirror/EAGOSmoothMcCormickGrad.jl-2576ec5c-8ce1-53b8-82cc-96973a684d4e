@@ -73,7 +73,7 @@ end
 
 Rounds the interval bounds of the `z_mct` and `Y_mct` elements out by `epsvi`.
 """
-function Rnd_Out_H_Intv(z_mct::Vector{SMCg{N,T}},Y_mct::Array{SMCg{N,T},2},epsvi::S) where {N,S<:AbstractFloat,T<:AbstractFloat}
+function Rnd_Out_H_All(z_mct::Vector{SMCg{N,T}},Y_mct::Array{SMCg{N,T},2},epsvi::S) where {N,S<:AbstractFloat,T<:AbstractFloat}
   epsv::T = convert(T,epsvi)
   temp1::Vector{SMCg{N,T}} = [SMCg{N,T}(z_mct[i].cc+epsv,z_mct[i].cv-epsv,
                                         z_mct[i].cc_grad, z_mct[i].cv_grad,
@@ -91,7 +91,7 @@ end
 
 Rounds the interval and relaxation bounds of the `z_mct` and `Y_mct` elements out by `epsvi`.
 """
-function Rnd_Out_H_All(z_mct::Vector{SMCg{N,T}},Y_mct::Array{SMCg{N,T},2},epsvi::S) where {N,S<:AbstractFloat,T<:AbstractFloat}
+function Rnd_Out_H_Intv(z_mct::Vector{SMCg{N,T}},Y_mct::Array{SMCg{N,T},2},epsvi::S) where {N,S<:AbstractFloat,T<:AbstractFloat}
   epsv::T = convert(T,epsvi)
   temp1::Vector{SMCg{N,T}} = [SMCg(z_mct[i].cc,z_mct[i].cv,
              z_mct[i].cc_grad, z_mct[i].cv_grad,
