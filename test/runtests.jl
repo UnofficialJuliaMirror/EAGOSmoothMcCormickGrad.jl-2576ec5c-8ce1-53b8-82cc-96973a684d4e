@@ -14,6 +14,11 @@ println("Implicit Bounding Utilities...")
 t = @elapsed include("Imp_Util_Test.jl")
 println("done (took $t seconds).")
 
+println("Testing McCormick Multiplication Operator...")
+t = @elapsed include("Mult_Test.jl")
+println("done (took $t seconds).")
+
+
 #=
 println("Implicit Bounding Subroutines...")
 t = @elapsed include("ImplicitBnd.jl")
