@@ -288,7 +288,7 @@ function mul2_u1mix_u2mix(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat
 	Intv::Interval{T} = x1.Intv*x2.Intv
   	cnst::Bool = x2.cnst ? x1.cnst : (x1.cnst ? x2.cnst : x1.cnst || x2.cnst)
 	cv1::T = x2.Intv.hi*x1.cv + x1.Intv.hi*x2.cv - x1.Intv.hi*x2.Intv.hi
-	cv2::T = x2.Intv.hi*x1.cc + x1.Intv.lo*x2.cc - x1.Intv.lo*x2.Intv.lo
+	cv2::T = x2.Intv.lo*x1.cc + x1.Intv.lo*x2.cc - x1.Intv.lo*x2.Intv.lo
 	if (cv1 > cv2)
 		cv::T = cv1
 		cv_grad::SVector{N,T} = x2.Intv.hi*x1.cv_grad + x1.Intv.hi*x2.cv_grad
@@ -297,7 +297,7 @@ function mul2_u1mix_u2mix(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat
 		cv_grad = x2.Intv.lo*x1.cc_grad + x1.Intv.lo*x2.cc_grad
 	end
 
-	cc1::T = x2.Intv.lo*x1.cv + x1.Intv.lo*x2.cc - x1.Intv.hi*x2.Intv.lo
+	cc1::T = x2.Intv.lo*x1.cv + x1.Intv.hi*x2.cc - x1.Intv.hi*x2.Intv.lo
 	cc2::T = x2.Intv.hi*x1.cc + x1.Intv.lo*x2.cv - x1.Intv.lo*x2.Intv.hi
 	if (cc1 < cc2)
 		cc::T = cc1
@@ -568,8 +568,8 @@ function STD_NS_ALT(x::SMCg{N,T},y::SMCg{N,T}) where {N,T<:AbstractFloat}
 end
 
 @inline function *(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
-	#println("start multiplication 1")
 	if x1 == x2
+		#println("sqr trace")
 		return sqr(x1)
 	end
 
@@ -577,9 +577,10 @@ end
 	degen2::Bool = ((x2.Intv.hi - x2.Intv.lo) == zero(T))
 
 	if (MC_param.mu >= 1 && ~(degen1||degen2))
-		#println("multiplication trace 1")
+		#println("SMOOTH mult trace")
 		return multiply_MV(x1,x2)
 	elseif (MC_param.multivar_refine && ~(degen1||degen2))
+		#println("NS MV mult trace 1")
 		if (x2.cnst)
 			cnst = x1.cnst
 		elseif (x1.cnst)
@@ -606,15 +607,17 @@ end
 	elseif (x2.Intv.hi <= zero(T))
 		return -((-x2)*x1)
 	else
-    if (x2.cnst)
-	  return STD_NS_ALT(x1,x2)
-#      return mul1_u1mix_u2mix(x1,x2,x1.cnst)
-    elseif (x1.cnst)
-	  return STD_NS_ALT(x1,x2)
-#      return mul1_u1mix_u2mix(x2,x1,x2.cnst)
-    else
-	  return STD_NS_ALT(x1,x2)
-	  #return mul2_u1mix_u2mix(x1,x2)
-    end
+    	if (x2.cnst)
+			#println("NS mult trace 5")
+	  		return STD_NS_ALT(x1,x2)
+#      		return mul1_u1mix_u2mix(x1,x2,x1.cnst)
+    	elseif (x1.cnst)
+	  		#println("NS mult trace 6")
+	  		return STD_NS_ALT(x1,x2)
+#      		return mul1_u1mix_u2mix(x2,x1,x2.cnst)
+    	else
+	  		#return STD_NS_ALT(x1,x2)
+	  		return mul2_u1mix_u2mix(x1,x2)
+    	end
 	end
 end
