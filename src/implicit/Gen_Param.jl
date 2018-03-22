@@ -134,6 +134,7 @@ function InGenExpansionParams(h!::Function, hj!::Function,
   xa_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(X[i].lo,X[i].lo,szero,szero,@interval(X[i].lo,X[i].lo),false,[∅],[1.0]) for i=1:nx]
   xA_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(X[i].hi,X[i].hi,szero,szero,@interval(X[i].hi,X[i].hi),false,[∅],[1.0]) for i=1:nx]
 
+  println("InGen 1")
   if mc_opts.z_rnd_all == true
     z_mc::Vector{SMCg{np,T}} = Rnd_Out_Z_All(mc_opts.lambda*xa_mc+(1.0-mc_opts.lambda)*xA_mc,mc_opts.z_rnd_all_eps)
   elseif mc_opts.z_rnd == true
@@ -142,6 +143,7 @@ function InGenExpansionParams(h!::Function, hj!::Function,
     z_mc = mc_opts.lambda*xa_mc+(1.0-mc_opts.lambda)*xA_mc
   end
 
+  println("InGen 2")
   p_mc::Vector{SMCg{np,T}} = [SMCg(pmid[i],pmid[i],sone,sone,@interval(P[i].lo,P[i].hi),false,[∅],[1.0]) for i=1:np]
   pref_mc::Vector{SMCg{np,T}} = copy(p_mc)
   aff_mc::Vector{SMCg{np,T}} = [SMCg{np,T}(xA_mc[i].cc,xa_mc[i].cv,szero,szero,@interval(xa_mc[i].cv,xA_mc[i].cc),false,[∅],[1.0]) for i=1:nx]
@@ -164,8 +166,9 @@ function InGenExpansionParams(h!::Function, hj!::Function,
 
   # Begins loop to generate parameters
   sto_out[1] = copy(x_mc)
+  println("InGen 3")
   for k=1:mc_opts.kmax
-
+    println("InGen 3a")
     aff_mc = [SMCg{np,Float64}(x_mc[i].cc,x_mc[i].cv,szero,szero,
                    @interval(x_mc[i].cv,x_mc[i].cc),false,[∅],[1.0]) for i=1:nx]
     if mc_opts.aff_rnd_all == true
@@ -173,13 +176,21 @@ function InGenExpansionParams(h!::Function, hj!::Function,
     elseif mc_opts.aff_rnd == true
       aff_mc = Rnd_Out_Z_Intv(aff_mc,mc_opts.aff_rnd_eps)
     end
-
-    h!(H_mc,z_mc,p_mc),
+    println("InGen 3b")
+    h!(H_mc,z_mc,p_mc)
+    println("InGen 3c")
     hj!(dH_mc,aff_mc,p_mc)
+    println("InGen 3d")
     Sparse_Precondition!(H_mc,dH_mc,mid.(Intv.(dH_mc)),SSto)
+    println("InGen 3e")
     dH_mc = transpose(dH_mc)
 
     # applies parametric iteration
+    println("InGen 3f")
+    println("x_mc: $x_mc")
+    println("dH_mc: $dH_mc")
+    println("H_mc: $H_mc")
+    println("z_mc: $z_mc")
     if (mc_opts.style == "NewtonGS")
       MCn_NewtonGS!(z_mc,x_mc,dH_mc,H_mc,nx)
     elseif (mc_opts.style == "KrawczykCW")
@@ -188,18 +199,24 @@ function InGenExpansionParams(h!::Function, hj!::Function,
       error("Unsupported Style of Implicit Relaxation")
     end
     dH_mc = transpose(dH_mc)
+    println("InGen 3g")
+    #println("z_mc: $z_mc")
+    println("x_mc: $x_mc")
+    #println("p_mc: $p_mc")
+    #println("xa_mc: $xa_mc")
+    #println("xA_mc: $xA_mc")
 
     # update affine relaxations & correct
     Affine_Exp!(x_mc,p_mc,p_mc,xa_mc,xA_mc,z_mc,exp_opt)
-
+    println("InGen 3h")
     Correct_Exp!(z_mc,x_mc,X,nx,np,mc_opts.aff_correct_eps)
-
+    println("InGen 3i")
     if mc_opts.z_rnd_all == true
       z_mc = Rnd_Out_Z_All(z_mc,mc_opts.z_rnd_all_eps)
     elseif mc_opts.z_rnd == true
       z_mc = Rnd_Out_Z_Intv(z_mc,mc_opts.z_rnd_eps)
     end
-
+    println("InGen 3j")
     # store relaxation
     sto_out[k+1] = copy(x_mc)
     end

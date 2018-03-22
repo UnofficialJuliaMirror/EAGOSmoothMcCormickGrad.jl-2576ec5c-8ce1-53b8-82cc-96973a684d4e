@@ -10,6 +10,21 @@ println("Testing Sparse Preconditioner...")
 t = @elapsed include("SparseCntr.jl")
 println("done (took $t seconds).")
 
+println("Implicit Bounding Utilities...")
+t = @elapsed include("Imp_Util_Test.jl")
+println("done (took $t seconds).")
+
+#=
+println("Implicit Bounding Subroutines...")
+t = @elapsed include("ImplicitBnd.jl")
+println("done (took $t seconds).")
+=#
+
+#=
+println("Testing McCormick Operators...")
+t = @elapsed include("Operators.jl")
+println("done (took $t seconds).")
+=#
 
 #=
 println("Testing McCormick Operators...")
