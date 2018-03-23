@@ -111,11 +111,11 @@ function pow(x::SMCg{N,T},c::Integer) where {N,T<:AbstractFloat}
         cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
         cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
       end
-      intv = pow(x.Intv,c)
+      intv = x.Intv^c
       return SMCg{N,T}(cc, cv, cc_grad, cv_grad, intv,x.cnst,x.IntvBox,x.xref)
     end
   else
-    if (x.Intv.lo<zero(x.cc) && x.Intv.hi<zero(x.cc))
+    if (x.Intv.hi<zero(x.cc))
       if (isodd(c))
         eps_min = x.Intv.hi
         eps_max = x.Intv.lo
@@ -138,9 +138,9 @@ function pow(x::SMCg{N,T},c::Integer) where {N,T<:AbstractFloat}
         cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
         cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
       end
-      intv = pow(x.Intv,c)
+      intv = x.Intv^c
       return SMCg{N,T}(cc, cv, cc_grad, cv_grad, intv,x.cnst,x.IntvBox,x.xref)
-    elseif (x.Intv.lo>zero(x.cc) && x.Intv.hi>zero(x.cc))
+    elseif (x.Intv.lo>zero(x.cc))
       eps_min = x.Intv.hi
       eps_max = x.Intv.lo
       midcc,cc_id = mid3(x.cc,x.cv,eps_max)
@@ -178,5 +178,6 @@ function  (^)(x::SMCg{N,T},c::Float64) where {N,T<:AbstractFloat}
 end
 ########### Defines inverse
 function inv(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+  println("ran inverse")
   x^(-1)
 end

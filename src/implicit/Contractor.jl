@@ -123,7 +123,7 @@ function MCn_KrawczykCW!(z_mc::Vector{SMCg{N,T}},x_mc::Vector{SMCg{N,T}},
         S1 += -YdH_mc.nzval[q]*(x_mc[YdH_mc.rowval[q]]-z_mc[YdH_mc.rowval[q]])
       end
     end
-    x_mc[i] =  z_mc[i] - YH_mc[i] - S1
+    x_mc[i] =  z_mc[i] - YH_mc[i] + S1
     println("x_mc[$i]: $(x_mc[i])")
     println("S1: $(S1)")
     x_mc[i] = Final_Cut(x_mc[i],x_mc_int[i])
