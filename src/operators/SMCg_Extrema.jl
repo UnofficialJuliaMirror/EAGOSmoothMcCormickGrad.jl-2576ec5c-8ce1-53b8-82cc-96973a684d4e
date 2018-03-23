@@ -22,10 +22,10 @@ end
   return line_seg(x,xL,max(xL,a),xU,max(xU,a)),dline_seg(x,xL,max(xL,a),xU,max(xU,a),d)
 end
 function cc_max_NS(x::T,lo::T,hi::T,c::S) where {S,T<:AbstractFloat}
-  return line_seg(x,lo,max(lo,c),hi,max(hi,c)),dline_seg(x,lo,max(lo,c),hi,max(hi,c),step(x-c))
+  return line_seg(x,lo,max(lo,c),hi,max(hi,c)),dline_seg(x,lo,max(lo,c),hi,max(hi,c),((x>c) ? 1.0 : 0.0))
 end
 function cv_max_NS(x::T,xL::T,xU::T,c::S) where {S,T<:AbstractFloat}
-  return max(x,c),step(x-c)
+  return max(x,c),((x>c) ? 1.0 : 0.0)
 end
 
 for i in union(int_list, float_list)
