@@ -569,7 +569,7 @@ end
 
 @inline function *(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
 	if x1 == x2
-		#println("sqr trace")
+		println("sqr trace")
 		return sqr(x1)
 	end
 
@@ -577,10 +577,10 @@ end
 	degen2::Bool = ((x2.Intv.hi - x2.Intv.lo) == zero(T))
 
 	if (MC_param.mu >= 1 && ~(degen1||degen2))
-		#println("SMOOTH mult trace")
+		println("SMOOTH mult trace")
 		return multiply_MV(x1,x2)
 	elseif (MC_param.multivar_refine && ~(degen1||degen2))
-		#println("NS MV mult trace 1")
+		println("NS MV mult trace 1")
 		if (x2.cnst)
 			cnst = x1.cnst
 		elseif (x1.cnst)
