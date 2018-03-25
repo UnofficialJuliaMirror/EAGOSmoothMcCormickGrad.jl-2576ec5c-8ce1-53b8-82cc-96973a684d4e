@@ -1,6 +1,12 @@
 # EAGOSmoothMcCormickGrad.jl
-
 A (differentiable) McCormick Relaxation Library w/Embedded (sub)gradient
+
+[![Build Status](https://travis-ci.org/MatthewStuber/EAGOSmoothMcCormickGrad.jl.svg?branch=master)](https://travis-ci.org/MatthewStuber/EAGOSmoothMcCormickGrad.jl)
+[![Coverage Status](https://coveralls.io/repos/github/MatthewStuber/EAGOSmoothMcCormickGrad.jl/badge.svg?branch=master)](https://coveralls.io/github/MatthewStuber/EAGOSmoothMcCormickGrad.jl?branch=master)
+[![codecov.io](http://codecov.io/github/MatthewStuber/EAGOSmoothMcCormickGrad.jl/coverage.svg?branch=master)](http://codecov.io/github/MatthewStuber/EAGOSmoothMcCormickGrad.jl?branch=master)
+
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://MatthewStuber.github.io/EAGO.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://MatthewStuber.github.io/EAGO.jl/latest)
 
 ## Authors
 
@@ -32,7 +38,7 @@ The `SMCg{N,T}` has the following fields
 - `IntvBox::Vector{Interval{T}}`: domain of initial problem used for subgradient refinement.
 - `xref::Vector{T}`: reference point defined for affine interval tightening procedure
 
-The routine are used extensively in the `EAGO.jl`[https://github.com/MatthewStuber/EAGO.jl] solver.
+The routine are used extensively in the [`EAGO.jl`](https://github.com/MatthewStuber/EAGO.jl) solver.
 Please see the example files for usage cases.
 
 ## Future Work
@@ -43,9 +49,9 @@ Please see the example files for usage cases.
   Julia's automatic differentiation ecosystem.
 
 ## Related Packages
-- (**EAGO.jl**)[https://github.com/MatthewStuber/EAGO.jl]: A package containing global and robust solvers based mainly on McCormick relaxations.
+- [**EAGO.jl**](https://github.com/MatthewStuber/EAGO.jl): A package containing global and robust solvers based mainly on McCormick relaxations.
 This package supports a JuMP and MathProgBase interface.
-- (**MC++**)[https://omega-icl.github.io/mcpp/]: A mature McCormick relaxation package in C++ that also includes McCormick-Taylor, Chebyshev
+- [**MC++**](https://omega-icl.github.io/mcpp/): A mature McCormick relaxation package in C++ that also includes McCormick-Taylor, Chebyshev
 Polyhedral and Ellipsoidal arithmetics.
 
 ## References

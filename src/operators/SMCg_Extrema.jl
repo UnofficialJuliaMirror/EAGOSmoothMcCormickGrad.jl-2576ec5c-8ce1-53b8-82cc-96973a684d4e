@@ -22,10 +22,10 @@ end
   return line_seg(x,xL,max(xL,a),xU,max(xU,a)),dline_seg(x,xL,max(xL,a),xU,max(xU,a),d)
 end
 function cc_max_NS(x::T,lo::T,hi::T,c::S) where {S,T<:AbstractFloat}
-  return line_seg(x,lo,max(lo,c),hi,max(hi,c)),dline_seg(x,lo,max(lo,c),hi,max(hi,c),step(x-c))
+  return line_seg(x,lo,max(lo,c),hi,max(hi,c)),dline_seg(x,lo,max(lo,c),hi,max(hi,c),((x>c) ? 1.0 : 0.0))
 end
 function cv_max_NS(x::T,xL::T,xU::T,c::S) where {S,T<:AbstractFloat}
-  return max(x,c),step(x-c)
+  return max(x,c),((x>c) ? 1.0 : 0.0)
 end
 
 for i in union(int_list, float_list)
@@ -40,10 +40,10 @@ for i in union(int_list, float_list)
      #println("ran me max 1")
 	   cc::T,dcc::T = cc_max(midcc,x.Intv.lo,x.Intv.hi,c)
      cv::T,dcv::T = cv_max(midcv,x.Intv.lo,x.Intv.hi,c)
-     gcc1::T,gdcc1::T = cc_max(x.cv,x.Intv.lo,x.Intv.hi)
- 	   gcv1::T,gdcv1::T = cv_max(x.cv,x.Intv.lo,x.Intv.hi)
- 	   gcc2::T,gdcc2::T = cc_max(x.cc,x.Intv.lo,x.Intv.hi)
- 	   gcv2::T,gdcv2::T = cv_max(x.cc,x.Intv.lo,x.Intv.hi)
+     gcc1::T,gdcc1::T = cc_max(x.cv,x.Intv.lo,x.Intv.hi,c)
+ 	   gcv1::T,gdcv1::T = cv_max(x.cv,x.Intv.lo,x.Intv.hi,c)
+ 	   gcc2::T,gdcc2::T = cc_max(x.cc,x.Intv.lo,x.Intv.hi,c)
+ 	   gcv2::T,gdcv2::T = cv_max(x.cc,x.Intv.lo,x.Intv.hi,c)
  	   cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
  	   cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
