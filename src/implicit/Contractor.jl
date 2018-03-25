@@ -43,11 +43,20 @@ size of the decision space, and `optc` is a vector with stored values.
 function MC_KrawczykCW!(z_mc::Vector{SMCg{N,T}},x_mc::Vector{SMCg{N,T}},
                         YdH_mc::Union{Vector{SMCg{N,T}},Array{SMCg{N,T},2}},
                         YH_mc::Vector{SMCg{N,T}},nx::Int64) where{N,T<:AbstractFloat}
+  #println("z_mc: $z_mc")
+  #println("x_mc: $x_mc")
+  #println("YdH_mc: $YdH_mc")
+  #println("YH_mc: $YH_mc")
+  #println("nx: $nx")
   S1::SMCg{N,T} = zero(SMCg{N,T})
   x_mc_int::Vector{SMCg{N,T}} = copy(x_mc)
+  #println("YH_mc: $S1")
+  #println("x_mc_int: $x_mc_int")
   for i=1:nx
+    #println("i: $i")
     S1 = zero(SMCg{N,T})
     for j=1:nx
+      #println("j: $j")
       if (i<j)
         S1 = S1 - (YdH_mc[i,j])*(x_mc[j]-z_mc[j])
       elseif (j>i)
@@ -57,7 +66,9 @@ function MC_KrawczykCW!(z_mc::Vector{SMCg{N,T}},x_mc::Vector{SMCg{N,T}},
       end
     end
     x_mc[i] =  z_mc[i] - YH_mc[i] + S1
+    #println("x_mc[$i]: $(x_mc[i])")
     x_mc[i] = Final_Cut(x_mc[i],x_mc_int[i])
+    #println("x_mc[$i]: $(x_mc[i])")
   end
 end
 
