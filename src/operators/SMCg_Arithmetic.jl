@@ -12,10 +12,10 @@ end
 function /(x::SMCg{N,T},y::SMCg{N,T}) where {N,T<:AbstractFloat}
 	pos_orth::Bool = (x.Intv.lo >= 0) && (y.Intv.lo >= 0)
 	if (x==y)
-		println("ran me to 1")
+		#println("ran me to 1")
 		return one(T)
 	elseif (MC_param.multivar_refine) && (~ (MC_param.mu >= 1)) && (pos_orth)
-		println("ran me to 2")
+		#println("ran me to 2")
 		Intv::Interval{T} = x.Intv/y.Intv
 		cv1::T,pos1::Int64 = mid3(x.cv,x.cc,x.Intv.lo)
 		cv1t::T = (cv1+sqrt(x.intv.lo*x.intv.hi))
@@ -41,7 +41,7 @@ function /(x::SMCg{N,T},y::SMCg{N,T}) where {N,T<:AbstractFloat}
 		cnst::Bool = y.cnst ? x.cnst : (x.cnst ? y.cnst : x.cnst || y.cnst)
 		return SMCg{T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x.IntvBox,x.xref)
 	else
-		println("ran me to 3")
+		#println("ran me to 3")
 		return x*inv(y)
 	end
 end

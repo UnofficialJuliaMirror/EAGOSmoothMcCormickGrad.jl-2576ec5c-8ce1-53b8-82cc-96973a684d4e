@@ -154,7 +154,8 @@ include("operators/SMCg_Other.jl")
 
 export mc_opts, SetOptions!, MC_KrawczykCW, MC_NewtonGS, GenExpansionParams,
        MC_impRelax, impRelax_f, impRelax_fg, set_default!, InGenExpansionParams,
-              MC_NimpRelax, NimpRelax_f, NimpRelax_fg
+       MC_NimpRelax, NimpRelax_f, NimpRelax_fg, IndGenExpansionParams,
+       MC_NdimpRelax, NdimpRelax_f, NdimpRelax_fg
 
 include("implicit/Options.jl")
 include("implicit/Utility.jl")

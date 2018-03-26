@@ -178,6 +178,6 @@ function  (^)(x::SMCg{N,T},c::Float64) where {N,T<:AbstractFloat}
 end
 ########### Defines inverse
 function inv(x::SMCg{N,T}) where {N,T<:AbstractFloat}
-  println("ran inverse")
+  #println("ran inverse")
   x^(-1)
 end
