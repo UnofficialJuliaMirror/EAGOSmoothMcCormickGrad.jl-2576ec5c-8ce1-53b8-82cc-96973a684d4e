@@ -245,7 +245,7 @@ function MC_NdimpRelax(h!::Function, hj!::Function, p::Vector{SMCg{N,T}}, pmid::
 
       h!(H_mc,z_mc,p_mc),
       hj!(dH_mc,aff_mc,p_mc)
-      Dense_Precondition!(H_mc,dH_mc,mid.(Intv.(dH_mc)),SSto)
+      Dense_Precondition!(H_mc,dH_mc,mid.(Intv.(dH_mc)),nx)
 
       if mc_opts.hhj_rnd_all == true
         H_mc,dH_mc = Rnd_Out_H_All(H_mc,dH_mc,mc_opts.hhj_rnd_all_eps)

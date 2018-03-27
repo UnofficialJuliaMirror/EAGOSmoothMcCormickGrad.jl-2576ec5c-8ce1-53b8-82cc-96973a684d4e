@@ -14,6 +14,7 @@ end
 ################################################################################
 ######################## Tests Standard McCormick Relaxations ##################
 ################################################################################
+EAGOSmoothMcCormickGrad.set_diff_relax(0)
 
 ######## tests division of same object ######
 a = seed_g(Float64,1,2)

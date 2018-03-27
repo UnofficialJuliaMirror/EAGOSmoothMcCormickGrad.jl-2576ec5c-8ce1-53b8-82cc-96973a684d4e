@@ -5,8 +5,8 @@
         elseif (ca<=xL)
           return x, one(T)
         else
-          val::T = ca + (xU-ca)*(max(ca,((x-ca)/(xU-ca))))^(MC_param.mu+1)
-          dval::T = ((xU-ca)/(xU-ca))*(MC_param.mu+1)*(max(ca,((x-ca)/(xU-ca))))^(MC_param.mu)
+          val::T = ca + (xU-ca)*(max(0.0,((x-ca)/(xU-ca))))^(MC_param.mu+1)
+          dval::T = ((xU-ca)/(xU-ca))*(MC_param.mu+1)*(max(0.0,((x-ca)/(xU-ca))))^(MC_param.mu)
           return val, dval
         end
 end
@@ -17,7 +17,7 @@ end
   elseif (ca<=xL)
     d = one(T)
   else
-    d = ((xU-ca)/(xU-ca))*(MC_param.mu+1)*(max(ca,((x-ca)/(xU-ca))))^(MC_param.mu)
+    d = ((xU-ca)/(xU-ca))*(MC_param.mu+1)*(max(0.0,((x-ca)/(xU-ca))))^(MC_param.mu)
   end
   return line_seg(x,xL,max(xL,a),xU,max(xU,a)),dline_seg(x,xL,max(xL,a),xU,max(xU,a),d)
 end
@@ -40,6 +40,7 @@ for i in union(int_list, float_list)
      #println("ran me max 1")
 	   cc::T,dcc::T = cc_max(midcc,x.Intv.lo,x.Intv.hi,c)
      cv::T,dcv::T = cv_max(midcv,x.Intv.lo,x.Intv.hi,c)
+     println("cv: $cv")
      gcc1::T,gdcc1::T = cc_max(x.cv,x.Intv.lo,x.Intv.hi,c)
  	   gcv1::T,gdcv1::T = cv_max(x.cv,x.Intv.lo,x.Intv.hi,c)
  	   gcc2::T,gdcc2::T = cc_max(x.cc,x.Intv.lo,x.Intv.hi,c)

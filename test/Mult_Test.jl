@@ -5,6 +5,10 @@ using Compat.Test
 using IntervalArithmetic
 using EAGOSmoothMcCormickGrad
 
+function XaboutY(x,y,tol)
+    return abs(x-y) <= tol
+end
+
 ################################################################################
 ################################################################################
 ##############      Testing for Nonsmooth Standard Mult           ##############
@@ -157,4 +161,45 @@ out = X*Y
 @test out.cv_grad[2] == -3.0
 @test out.Intv.lo == -20.0
 @test out.Intv.hi == 15.0
+
+
+################################################################################
+################################################################################
+##############      Testing for Smooth Standard Mult           ##############
+################################################################################
+################################################################################
+EAGOSmoothMcCormickGrad.set_diff_relax(1)
+
+seed1 = seed_g(Float64,1,2)
+seed2 = seed_g(Float64,2,2)
+x1 = SMCg{2,Float64}(0.0,0.0,seed1,seed1,Interval(-200.0,200.0),false, [Interval(-200.0,200.0),Interval(0.0,400.0)],[0.0,200.0])
+y1 = SMCg{2,Float64}(200.0,200.0,seed2,seed2,Interval(0.0,400.0),false, [Interval(-200.0,200.0),Interval(0.0,400.0)],[0.0,200.0])
+z1 = x1*y1
+@test XaboutY(z1.cc,40000,1E-4)
+@test XaboutY(z1.cv,-40000,1E-4)
+
+x2 = SMCg{2,Float64}(170.0,170.0,seed1,seed1,Interval(100.0,240.0),false, [Interval(100.0,240.0),Interval(100.0,400.0)],[170.0,250.0])
+y2 = SMCg{2,Float64}(250.0,250.0,seed2,seed2,Interval(100.0,400.0),false, [Interval(100.0,240.0),Interval(100.0,400.0)],[170.0,250.0])
+z2 = x2*y2
+@test XaboutY(z2.cc,53000,1E-4)
+@test XaboutY(z2.cv,32000,1E-4)
+
+x3 = SMCg{2,Float64}(-200.0,-200.0,seed1,seed1,Interval(-300.0,-100.0),false, [Interval(-300.0,-100.0),Interval(-400.0,-200.0)],[-200.0,-300.0])
+y3 = SMCg{2,Float64}(-300.0,-300.0,seed2,seed2,Interval(-400.0,-200.0),false, [Interval(-300.0,-100.0),Interval(-400.0,-200.0)],[-200.0,-300.0])
+z3 = x3*y3
+@test XaboutY(z3.cc,70000,1E-4)
+@test XaboutY(z3.cv,50000,1E-4)
+
+x4 = SMCg{2,Float64}(150.0,150.0,seed1,seed1,Interval(100.0,200.0),false, [Interval(100.0,200.0),Interval(-500.0,-100.0)],[150.0,-300.0])
+y4 = SMCg{2,Float64}(-250.0,-250.0,seed2,seed2,Interval(-500.0,-100.0),false, [Interval(100.0,200.0),Interval(-500.0,-100.0)],[150.0,-300.0])
+z4 = x4*y4
+@test XaboutY(z4.cc,-30000,1E-3)
+@test XaboutY(z4.cv,-47460.9375,1E-3)
+
+x5 = SMCg{2,Float64}(-150.0,-150.0,seed1,seed1,Interval(-200.0,-100.0),false, [Interval(-200.0,-100.0),Interval(200.0,400.0)],[-150.0,300.0])
+y5 = SMCg{2,Float64}(300.0,300.0,seed2,seed2,Interval(200.0,400.0),false, [Interval(-200.0,-100.0),Interval(200.0,400.0)],[-150.0,300.0])
+z5 = x5*y5
+@test XaboutY(z5.cc,-40000,1E-4)
+@test XaboutY(z5.cv,-50000,1E-4)
+
 end
