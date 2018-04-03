@@ -1,142 +1,329 @@
 ########### Defines multiplicaiton of SMC and SMC
-function sigu(x::T) where {T<:AbstractFloat}
-	 (zero(T)<=x) ? x^(1.0/MC_param.mu) : -abs(x)^(1.0/MC_param.mu)
+function sigu(x::T,mu1T::T) where {T<:AbstractFloat}
+	 (zero(T)<=x) ? x^(one(T)/mu1T) : -abs(x)^(one(T)/mu1T)
  end
-function xstar(y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	return lambda.lo+(lambda.hi-lambda.lo)*(((nu.hi-y)/(nu.hi-nu.lo))
-				 +sigu(-(nu.lo+nu.hi)/((MC_param.mu+1)*(nu.hi-nu.lo))))
+
+function gCxAcv(alpha::V,beta::V,lambda::V,nu::V,x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+		# gCxA pre-terms
+		alplo::T = alpha.lo
+		alphi::T = alpha.hi
+		betlo::T = beta.lo
+		bethi::T = beta.hi
+		LmdDel::T = lambda.hi-lambda.lo
+		NuDel::T = nu.hi-nu.lo
+		LmdSum::T = lambda.lo+lambda.hi
+		NuSum::T = nu.lo+nu.hi
+		mu1::Int64 = MC_param.mu+1
+		mu1T::T = convert(T,MC_param.mu+1)
+		mu1n::Int64 = MC_param.mu-1
+
+		xslo::T = lambda.lo+LmdDel*(((nu.hi-betlo)/NuDel)+sigu(-(NuSum)/(mu1T*(NuDel)),mu1T))
+		xshi::T = lambda.lo+LmdDel*(((nu.hi-bethi)/NuDel)+sigu(-(NuSum)/(mu1T*(NuDel)),mu1T))
+		yslo::T = nu.lo+NuDel*(((lambda.hi-alplo)/LmdDel)-sigu((LmdSum)/(mu1T*LmdDel),mu1T))
+		yshi::T = nu.lo+NuDel*(((lambda.hi-alphi)/LmdDel)-sigu((LmdSum)/(mu1T*LmdDel),mu1T))
+
+		# calculates term 1
+		if (xslo <= alplo)
+			term1::T = alplo
+		elseif (alphi <= xslo)
+			term1 = alphi
+		else
+			term1 = xslo
+		end
+
+		# calculates term 2
+		if (xshi <= alplo)
+			term2::T = alplo
+		elseif (alphi <= xshi)
+			term2 = alphi
+		else
+			term2 = xshi
+		end
+
+		# calculates term 3
+		if (yslo <= betlo)
+			term3::T = betlo
+		elseif (bethi <= yslo)
+			term3 = bethi
+		else
+			term3 = yslo
+		end
+
+		# calculates term 4
+		if (yshi <= betlo)
+			term4::T = betlo
+		elseif (bethi <= yshi)
+			term4 = bethi
+		else
+			term4 = yshi
+		end
+
+		# calculates the convex relaxation
+		tempGxA1a::T = LmdDel*NuDel*abs((betlo-nu.lo)/NuDel-(lambda.hi-term1)/LmdDel)^mu1
+		tempGxA1::T = half(T)*(term1*NuSum+betlo*LmdSum-(lambda.lo*nu.lo+lambda.hi*nu.hi)+tempGxA1a)
+		tempGxA2a::T = LmdDel*NuDel*abs((bethi-nu.lo)/NuDel-(lambda.hi-term2)/LmdDel)^mu1
+		tempGxA2::T = half(T)*(term2*NuSum+bethi*LmdSum-(lambda.lo*nu.lo+lambda.hi*nu.hi)+tempGxA2a)
+		tempGxA3a::T = LmdDel*NuDel*abs((term3-nu.lo)/NuDel-(lambda.hi-alplo)/LmdDel)^mu1
+		tempGxA3::T = half(T)*(alplo*NuSum+term3*LmdSum-(lambda.lo*nu.lo+lambda.hi*nu.hi)+tempGxA3a)
+		tempGxA4a::T = LmdDel*NuDel*abs((term4-nu.lo)/NuDel-(lambda.hi-alphi)/LmdDel)^mu1
+		tempGxA4::T = half(T)*(alphi*NuSum+term4*LmdSum-(lambda.lo*nu.lo+lambda.hi*nu.hi)+tempGxA4a)
+
+		# gets minima which is cv/cc/Intv depending on arguments
+		a = min(tempGxA1,tempGxA2,tempGxA3,tempGxA4)
+
+		if (a == tempGxA1)
+				psi_mul::T = (betlo-nu.lo)/NuDel - (lambda.hi-term1)/LmdDel
+				psi_mult_x1::T = half(T)*(NuSum+mu1T*NuDel*(psi_mul)*abs(psi_mul)^mu1n)
+				psi_mult_y1::T = half(T)*(LmdSum+mu1T*(LmdDel)*(psi_mul)*abs(psi_mul)^mu1n)
+		elseif (a == tempGxA2)
+				psi_mul = (bethi-nu.lo)/NuDel-(lambda.hi-term2)/LmdDel
+				psi_mult_x1 = half(T)*(NuSum+mu1T*NuDel*(psi_mul)*abs(psi_mul)^mu1n)
+				psi_mult_y1 = half(T)*(LmdSum+mu1T*LmdDel*(psi_mul)*abs(psi_mul)^mu1n)
+		elseif (a == tempGxA3)
+				psi_mul = (term3-nu.lo)/NuDel-(lambda.hi-alplo)/LmdDel
+				psi_mult_x1 = half(T)*(NuSum+mu1T*NuDel*(psi_mul)*abs(psi_mul)^mu1n)
+				psi_mult_y1 = half(T)*(LmdSum+mu1T*LmdDel*(psi_mul)*abs(psi_mul)^mu1n)
+		else
+				psi_mul = (term4-nu.lo)/NuDel-(lambda.hi-alphi)/LmdDel
+				psi_mult_x1 = half(T)*(NuSum+mu1T*NuDel*(psi_mul)*abs(psi_mul)^mu1n)
+				psi_mult_y1 = half(T)*(LmdSum+mu1T*LmdDel*(psi_mul)*abs(psi_mul)^mu1n)
+		end
+
+    	grad::SVector{N,T} = max(zero(T),psi_mult_x1)*x1.cv_grad+
+							 min(zero(T),psi_mult_x1)*x1.cc_grad+
+							 max(zero(T),psi_mult_y1)*x2.cv_grad+
+							 min(zero(T),psi_mult_y1)*x2.cc_grad
+
+    return a,grad
 end
 
-function ystar(x::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	return nu.lo+(nu.hi-nu.lo)*(((lambda.hi-x)/(lambda.hi-lambda.lo))
-				 -sigu((lambda.lo+lambda.hi)/((MC_param.mu+1)*(lambda.hi-lambda.lo))))
-end
-@inline function dxA(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	      return (lambda.hi-lambda.lo)*(nu.hi-nu.lo)*
-        abs((y-nu.lo)/(nu.hi-nu.lo)-(lambda.hi-x)/(lambda.hi-lambda.lo))^(MC_param.mu+1)
-end
-@inline function GxA(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	      return (x*(nu.lo+nu.hi)+y*(lambda.lo+lambda.hi)-
-        (lambda.lo*nu.lo+lambda.hi*nu.hi)+dxA(x,y,lambda,nu))/2
-end
-@inline function dxB(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	      return (lambda.hi-lambda.lo)*(nu.hi-nu.lo)*max(zero(T),(((y-nu.lo)/(nu.hi-nu.lo))-(lambda.hi-x)/(lambda.hi-lambda.lo)))^(Int64(MC_param.mu+1))
-end
-@inline function GxB(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	      return x*nu.lo+y*lambda.lo-lambda.lo*nu.lo+dxB(x,y,lambda,nu)
-end
-@inline function gCxA(alpha::Interval{T},beta::Interval{T},lambda::Interval{T},
-					  nu::Interval{T},x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
-        term1::T,blank::Int64 = mid3(alpha.lo,alpha.hi,xstar(beta.lo,lambda,nu))
-	    term2::T,blank = mid3(alpha.lo,alpha.hi,xstar(beta.hi,lambda,nu))
-	    term3::T,blank = mid3(beta.lo,beta.hi,ystar(alpha.lo,lambda,nu))
-	    term4::T,blank = mid3(beta.lo,beta.hi,ystar(alpha.hi,lambda,nu))
-	    a::T,b::Int64 = findmin([GxA(term1,beta.lo,lambda,nu),GxA(term2,beta.hi,lambda,nu),
-                           GxA(alpha.lo,term3,lambda,nu),GxA(alpha.hi,term4,lambda,nu)])
-        		if (b == 1)
-					#println("gCxA trace 1")
-			  		grad::SVector{N,T} = max(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cv_grad+
-					   				 min(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cc_grad+
-					   	 			 max(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cv_grad+
-				 	   				 min(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cc_grad
+function gCxAcc(alpha::V,beta::V,lambda::V,nu::V,x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+		# gCxA pre-terms
+		alplo::T = alpha.lo
+		alphi::T = alpha.hi
+		betlo::T = beta.lo
+		bethi::T = beta.hi
+		LmdDel::T = lambda.hi-lambda.lo
+		NuDel::T = nu.hi-nu.lo
+		LmdSum::T = lambda.lo+lambda.hi
+		NuSum::T = nu.lo+nu.hi
+		NuDotLmd::T = lambda.lo*nu.lo+lambda.hi*nu.hi
+		mu1::Int64 = MC_param.mu+1
+		mu1n::Int64 = MC_param.mu-1
+		mu1T::T = convert(T,MC_param.mu+1)
 
-				    grad2::SVector{N,T} = max(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cc_grad+
-							min(zero(T),psi_mlt_Ax(term1,beta.lo,lambda,nu))*x1.cv_grad-
-							max(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cc_grad-
-							min(zero(T),psi_mlt_Ay(term1,beta.lo,lambda,nu))*x2.cv_grad
-				elseif (b == 2)
-					#println("gCxA trace 2")
-					grad = max(zero(T),psi_mlt_Ax(term2,beta.hi,lambda,nu))*x1.cv_grad+
-						   min(zero(T),psi_mlt_Ax(term2,beta.hi,lambda,nu))*x1.cc_grad+
-					 	   max(zero(T),psi_mlt_Ay(term2,beta.hi,lambda,nu))*x2.cv_grad+
-				 		   min(zero(T),psi_mlt_Ay(term2,beta.hi,lambda,nu))*x2.cc_grad
-				    grad2 = max(zero(T),psi_mlt_Ax(term2,beta.hi,lambda,nu))*x1.cc_grad+
-							min(zero(T),psi_mlt_Ax(term2,beta.hi,lambda,nu))*x1.cv_grad-
-							max(zero(T),psi_mlt_Ay(term2,beta.hi,lambda,nu))*x2.cc_grad-
-							min(zero(T),psi_mlt_Ay(term2,beta.hi,lambda,nu))*x2.cv_grad
-				elseif (b == 3)
-				#	println("gCxA trace 3")
-					grad = max(zero(T),psi_mlt_Ax(alpha.lo,term3,lambda,nu))*x1.cv_grad+
-						   min(zero(T),psi_mlt_Ax(alpha.lo,term3,lambda,nu))*x1.cc_grad+
-					 	   max(zero(T),psi_mlt_Ay(alpha.lo,term3,lambda,nu))*x2.cv_grad+
-				 		   min(zero(T),psi_mlt_Ay(alpha.lo,term3,lambda,nu))*x2.cc_grad
-				    grad2 = max(zero(T),psi_mlt_Ax(alpha.lo,term3,lambda,nu))*x1.cc_grad+
-							min(zero(T),psi_mlt_Ax(alpha.lo,term3,lambda,nu))*x1.cv_grad-
-							max(zero(T),psi_mlt_Ay(alpha.lo,term3,lambda,nu))*x2.cc_grad-
-							min(zero(T),psi_mlt_Ay(alpha.lo,term3,lambda,nu))*x2.cv_grad
-				else
-				#	println("gCxA trace 4")
-					grad = max(zero(T),psi_mlt_Ax(alpha.hi,term4,lambda,nu))*x1.cv_grad+
-						   min(zero(T),psi_mlt_Ax(alpha.hi,term4,lambda,nu))*x1.cc_grad+
-					 	   max(zero(T),psi_mlt_Ay(alpha.hi,term4,lambda,nu))*x2.cv_grad+
-				 		   min(zero(T),psi_mlt_Ay(alpha.hi,term4,lambda,nu))*x2.cc_grad
-				   grad2 = max(zero(T),psi_mlt_Ax(alpha.hi,term4,lambda,nu))*x1.cc_grad+
-				        	min(zero(T),psi_mlt_Ax(alpha.hi,term4,lambda,nu))*x1.cv_grad-
-							max(zero(T),psi_mlt_Ay(alpha.hi,term4,lambda,nu))*x2.cc_grad-
-							min(zero(T),psi_mlt_Ay(alpha.hi,term4,lambda,nu))*x2.cv_grad
-				end
+		xslo::T = lambda.lo+LmdDel*(((nu.hi-betlo)/NuDel)+sigu(-(NuSum)/(mu1T*(NuDel)),mu1T))
+		xshi::T = lambda.lo+LmdDel*(((nu.hi-bethi)/NuDel)+sigu(-(NuSum)/(mu1T*(NuDel)),mu1T))
+		yslo::T = nu.lo+NuDel*(((lambda.hi-alplo)/LmdDel)-sigu((LmdSum)/(mu1T*LmdDel),mu1T))
+		yshi::T = nu.lo+NuDel*(((lambda.hi-alphi)/LmdDel)-sigu((LmdSum)/(mu1T*LmdDel),mu1T))
 
-        return a,grad,grad2
+		# calculates term 1
+		if (xslo <= alplo)
+			term1::T = alplo
+		elseif (alphi <= xslo)
+			term1 = alphi
+		else
+			term1 = xslo
+		end
+
+		# calculates term 2
+		if (xshi <= alplo)
+			term2::T = alplo
+		elseif (alphi <= xshi)
+			term2 = alphi
+		else
+			term2 = xshi
+		end
+
+		# calculates term 3
+		if (yslo <= betlo)
+			term3::T = betlo
+		elseif (bethi <= yslo)
+			term3 = bethi
+		else
+			term3 = yslo
+		end
+
+		# calculates term 4
+		if (yshi <= betlo)
+			term4::T = betlo
+		elseif (bethi <= yshi)
+			term4 = bethi
+		else
+			term4 = yshi
+		end
+
+		# calculates the convex relaxation
+		tempGxA1a::T = LmdDel*NuDel*abs((betlo-nu.lo)/NuDel-(lambda.hi-term1)/LmdDel)^mu1
+		tempGxA1::T = half(T)*(term1*NuSum+betlo*LmdSum-NuDotLmd+tempGxA1a)
+		tempGxA2a::T = LmdDel*NuDel*abs((bethi-nu.lo)/NuDel-(lambda.hi-term2)/LmdDel)^mu1
+		tempGxA2::T = half(T)*(term2*NuSum+bethi*LmdSum-NuDotLmd+tempGxA2a)
+		tempGxA3a::T = LmdDel*NuDel*abs((term3-nu.lo)/NuDel-(lambda.hi-alplo)/LmdDel)^mu1
+		tempGxA3::T = half(T)*(alplo*NuSum+term3*LmdSum-NuDotLmd+tempGxA3a)
+		tempGxA4a::T = LmdDel*NuDel*abs((term4-nu.lo)/NuDel-(lambda.hi-alphi)/LmdDel)^mu1
+		tempGxA4::T = half(T)*(alphi*NuSum+term4*LmdSum-NuDotLmd+tempGxA4a)
+
+		# gets minima which is cv/cc/Intv depending on arguments
+		a::T = min(tempGxA1,tempGxA2,tempGxA3,tempGxA4)
+
+	   if (a == tempGxA1)
+		   psi_mul::T = (betlo-nu.lo)/NuDel - (lambda.hi-term1)/LmdDel
+		   psi_mult_x1::T = half(T)*(NuSum+mu1T*NuDel*(psi_mul)*abs(psi_mul)^mu1n)
+		   psi_mult_y1::T = half(T)*(LmdSum+mu1T*LmdDel*(psi_mul)*abs(psi_mul)^mu1n)
+		elseif (a == tempGxA2)
+			psi_mul = (bethi-nu.lo)/NuDel - (lambda.hi-term2)/LmdDel
+			psi_mult_x1 = half(T)*(NuSum+mu1*NuDel*(psi_mul)*abs(psi_mul)^mu1n)
+			psi_mult_y1 = half(T)*(LmdSum+mu1*LmdDel*(psi_mul)*abs(psi_mul)^mu1n)
+		elseif (a == tempGxA3)
+			psi_mul = (term3-nu.lo)/NuDel - (lambda.hi-alplo)/LmdDel
+			psi_mult_x1 = half(T)*(NuSum+mu1T*NuDel*(psi_mul)*abs(psi_mul)^mu1n)
+			psi_mult_y1 = half(T)*(LmdSum+mu1T*LmdDel*(psi_mul)*abs(psi_mul)^mu1n)
+		else
+			psi_mul= (term4-nu.lo)/NuDel - (lambda.hi-alphi)/LmdDel
+			psi_mult_x1 = half(T)*(NuSum+mu1T*NuDel*(psi_mul)*abs(psi_mul)^mu1n)
+			psi_mult_y1 = half(T)*(LmdSum+mu1T*LmdDel*(psi_mul)*abs(psi_mul)^mu1n)
+		end
+		grad2::SVector{N,T} = max(zero(T),psi_mult_x1)*x1.cc_grad+
+							  min(zero(T),psi_mult_x1)*x1.cv_grad-
+							  max(zero(T),psi_mult_y1)*x2.cc_grad-
+							  min(zero(T),psi_mult_y1)*x2.cv_grad
+    return a,grad2
 end
 
-# include correction from Khan
-function psi_mlt_Ax(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	term = [(y-nu.lo)/(nu.hi-nu.lo) (lambda.hi-x)/(lambda.hi-lambda.lo)]
-	return 0.5*(nu.lo+nu.hi+(MC_param.mu+1)*(nu.hi-nu.lo)*(term[1]-term[2])*abs(term[1]-term[2])^(MC_param.mu-1))
-end
-# include correction from Khan
-function psi_mlt_Ay(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	term = [(y-nu.lo)/(nu.hi-nu.lo) (lambda.hi-x)/(lambda.hi-lambda.lo)]
-	return 0.5*(lambda.lo+lambda.hi+(MC_param.mu+1)*(lambda.hi-lambda.lo)*(term[1]-term[2])*abs(term[1]-term[2])^(MC_param.mu-1))
-end
-function psi_mlt_Bx(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	term = [(y - nu.lo)/(nu.hi-nu.lo)  (lambda.hi - x)/(lambda.hi-lambda.lo)]
-	return nu.lo+(MC_param.mu+1)*(nu.hi-nu.lo)*max(0,term[1]-term[2])^MC_param.mu
-end
-function psi_mlt_By(x::T,y::T,lambda::Interval{T},nu::Interval{T}) where {T<:AbstractFloat}
-	term = [(y - nu.lo)/(nu.hi-nu.lo)  (lambda.hi - x)/(lambda.hi-lambda.lo)]
-	return lambda.lo+(MC_param.mu+1)*(lambda.hi-lambda.lo)*max(0,term[1]-term[2])^MC_param.mu
+function gCxAIntv(alpha::V,beta::V,lambda::V,nu::V,x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+		# gCxA pre-terms
+		alplo::T = alpha.lo
+		alphi::T = alpha.hi
+		betlo::T = beta.lo
+		bethi::T = beta.hi
+		LmdDel::T = lambda.hi-lambda.lo
+		NuDel::T = nu.hi-nu.lo
+		LmdSum::T = lambda.lo+lambda.hi
+		NuSum::T = nu.lo+nu.hi
+		NuLmd::T = lambda.lo*nu.lo+lambda.hi*nu.hi
+		mu1::Int64 = MC_param.mu+1
+		mu1n::Int64 = MC_param.mu-1
+		mu1T::T = convert(T,MC_param.mu+1)
+
+		xslo::T = lambda.lo+LmdDel*(((nu.hi-betlo)/NuDel)+sigu(-(NuSum)/(mu1*(NuDel)),mu1T))
+		xshi::T = lambda.lo+LmdDel*(((nu.hi-bethi)/NuDel)+sigu(-(NuSum)/(mu1*(NuDel)),mu1T))
+		yslo::T = nu.lo+NuDel*(((lambda.hi-alplo)/LmdDel)-sigu((LmdSum)/(mu1*LmdDel),mu1T))
+		yshi::T = nu.lo+NuDel*(((lambda.hi-alphi)/LmdDel)-sigu((LmdSum)/(mu1*LmdDel),mu1T))
+
+		# calculates term 1
+		if (xslo <= alplo)
+			term1::T = alplo
+		elseif (alphi <= xslo)
+			term1 = alphi
+		else
+			term1 = xslo
+		end
+
+		# calculates term 2
+		if (xshi <= alplo)
+			term2::T = alplo
+		elseif (alphi <= xshi)
+			term2 = alphi
+		else
+			term2 = xshi
+		end
+
+		# calculates term 3
+		if (yslo <= betlo)
+			term3::T = betlo
+		elseif (bethi <= yslo)
+			term3 = bethi
+		else
+			term3 = yslo
+		end
+
+		# calculates term 4
+		if (yshi <= betlo)
+			term4::T = betlo
+		elseif (bethi <= yshi)
+			term4 = bethi
+		else
+			term4 = yshi
+		end
+
+		# calculates the convex relaxation
+		tempGxA1a::T = LmdDel*NuDel*abs((betlo-nu.lo)/NuDel-(lambda.hi-term1)/LmdDel)^mu1
+		tempGxA1::T =  half(T)*(term1*NuSum+betlo*LmdSum-NuLmd+tempGxA1a)
+		tempGxA2a::T = LmdDel*NuDel*abs((bethi-nu.lo)/NuDel-(lambda.hi-term2)/LmdDel)^mu1
+		tempGxA2::T =  half(T)*(term2*NuSum+bethi*LmdSum-NuLmd+tempGxA2a)
+		tempGxA3a::T = LmdDel*NuDel*abs((term3-nu.lo)/NuDel-(lambda.hi-alplo)/LmdDel)^mu1
+		tempGxA3::T =  half(T)*(alplo*NuSum+term3*LmdSum-NuLmd+tempGxA3a)
+		tempGxA4a::T = LmdDel*NuDel*abs((term4-nu.lo)/NuDel-(lambda.hi-alphi)/LmdDel)^mu1
+		tempGxA4::T = half(T)*(alphi*NuSum+term4*LmdSum-NuLmd+tempGxA4a)
+
+		# gets minima which is cv/cc/Intv depending on arguments
+		return min(tempGxA1,tempGxA2,tempGxA3,tempGxA4)
 end
 
-function multiply_MV(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function multiply_MV(x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+	x1cv::T = x1.cv
+	x2cv::T = x2.cv
+	x1cc::T = x1.cc
+	x2cc::T = x2.cc
+	x1lo::T = x1.Intv.lo
+	x2lo::T = x2.Intv.lo
+	x1hi::T = x1.Intv.hi
+	x2hi::T = x2.Intv.hi
+	x1h_l::T = x1hi-x1lo
+	x1h_v::T = x1hi-x1cv
+	x2h_l::T = x2hi-x2lo
+	x2v_l::T = x2cv-x2lo
 	cv::T = zero(T)
 	cc::T = zero(T)
-	alpha0::Interval{T} = Interval(x1.cv,x1.cc)
-	beta0::Interval{T} =  Interval(x2.cv,x2.cc)
-	if (zero(T)<=x1.Intv.lo) && (zero(T)<=x2.Intv.lo)
-		cv = GxB(x1.cv,x2.cv,x1.Intv,x2.Intv)
-		cv_grad::SVector{N,T} = x1.cv_grad*psi_mlt_Bx(x1.cv,x2.cv,x1.Intv,x2.Intv) + x2.cv_grad*psi_mlt_By(x1.cv,x2.cv,x1.Intv,x2.Intv)
-	elseif ((x1.Intv.hi<=zero(T))) && (x2.Intv.hi<=zero(T))
-		cv = GxB(-x1.cc,-x2.cc,-x1.Intv,-x2.Intv)
-		cv_grad = - x1.cc_grad*psi_mlt_Bx(-x1.cc,-x2.cc,-x1.Intv,-x2.Intv) - x2.cc_grad*psi_mlt_By(-x1.cc,-x2.cc,-x1.Intv,-x2.Intv)
+	mu1::Int64 = MC_param.mu+1
+	muf1::T = convert(T,MC_param.mu+1)
+	alpha0::V = V(x1cv,x1cc)
+	beta0::V = V(x2cv,x2cc)
+	if (zero(T)<=x1lo) && (zero(T)<=x2lo)
+		b1_temp1::T = max(zero(T),((x2v_l/x2h_l)-(x1h_v/x1h_l)))
+		b1_term2::T = x2lo+muf1*x2h_l*b1_temp1^MC_param.mu
+		b1_term3::T = x1lo+muf1*x1h_l*b1_temp1^MC_param.mu
+		cv = x1cv*x2lo + x1lo*x2v_l + x1h_l*x2h_l*b1_temp1^mu1
+		cv_grad::SVector{N,T} = b1_term2*x1.cv_grad + b1_term3*x2.cv_grad
+	elseif ((x1hi<=zero(T))) && (x2hi<=zero(T))
+		b1_temp = max(zero(T),(x2hi - x2cc)/x2h_l - (x1cc-x1lo)/(x1h_l))
+		cv = x1cc*x2hi + x1hi*(x2cc - x2hi) + (x1h_l)*(x2h_l)*b1_temp^mu1
+		b1_term2 = -x2hi+muf1*(x2h_l)*max(zero(T),b1_temp)^MC_param.mu
+		b1_term3 = -x1hi+muf1*(x1h_l)*max(zero(T),b1_temp)^MC_param.mu
+		cv_grad = (-b1_term2)*x1.cc_grad - b1_term3*x2.cc_grad
 	else
-		cv,cv_grad,temp = gCxA(alpha0,beta0,x1.Intv,x2.Intv,x1,x2)
+		cv,cv_grad = gCxAcv(alpha0,beta0,x1.Intv,x2.Intv,x1,x2)
 	end
-	if ((x1.Intv.hi<=zero(T))) && ((zero(T))<=x2.Intv.lo)
-		cc = -GxB(-x1.cc,x2.cv,-x1.Intv,x2.Intv)
-		cc_grad::SVector{N,T} = x1.cc_grad*psi_mlt_Bx(-x1.cc,x2.cv,-x1.Intv,x2.Intv) - x2.cv_grad*psi_mlt_By(-x1.cc,x2.cv,-x1.Intv,x2.Intv)
+	if ((x1hi<=zero(T))) && ((zero(T))<=x2lo)
+		btemp1 = max(zero(T),x2v_l/x2h_l - (x1cc-x1lo)/(x1h_l))
+		btemp2 = x2lo+muf1*x2h_l*btemp1^MC_param.mu
+		btemp3 = -x1hi+muf1*x1h_l*btemp1^MC_param.mu
+		cc = x1cc*x2lo-x1hi*(x2lo-x2cv)-x1h_l*x2h_l*btemp1^mu1
+		cc_grad::SVector{N,T} = btemp2*x1.cc_grad - btemp3*x2.cv_grad
 	elseif ((zero(T))<=x1.Intv.lo) && (x2.Intv.hi<=zero(T))
-		cc = -GxB(x1.cv,-x2.cc,x1.Intv,-x2.Intv)
-		cc_grad = - x1.cv_grad*psi_mlt_Bx(x1.cv,-x2.cc,x1.Intv,-x2.Intv) + x2.cc_grad*psi_mlt_By(x1.cv,-x2.cc,x1.Intv,-x2.Intv)
+		btemp1 = max(zero(T),(x2hi-x2cc)/x2h_l - x1h_v/x1h_l)
+		btemp2 = -x2hi+muf1*(x2h_l)*btemp1^MC_param.mu
+		btemp3 = x1lo+muf1*x1h_l*btemp1^MC_param.mu
+		cc = x1cv*x2hi+x1lo*(x2cc-x2hi)-x1h_l*x2h_l*btemp1^mu1
+		cc_grad = -btemp2*x1.cv_grad + btemp3*x2.cc_grad
 	else
-		cct::T,temp,cc_gradt::SVector{N,T} = gCxA(-alpha0,beta0,-x1.Intv,x2.Intv,x1,x2)
+		cct::T,cc_gradt::SVector{N,T} = gCxAcc(-alpha0,beta0,-x1.Intv,x2.Intv,x1,x2)
 		cc = -cct
 		cc_grad = cc_gradt
 	end
-	if (min(x1.Intv.lo,x2.Intv.lo)<zero(T)<max(x1.Intv.hi,x2.Intv.hi))
-		lo_Intv_calc::T,blank = gCxA(x1.Intv,x2.Intv,x1.Intv,x2.Intv,x1,x2)
-		hi_Intv_calct::T,blankt = gCxA(-x1.Intv,x2.Intv,-x1.Intv,x2.Intv,x1,x2)
-		hi_Intv_calc::T = -hi_Intv_calct
-		Intv_calc::Interval{T} = @interval(lo_Intv_calc,hi_Intv_calc)
+	if (min(x1lo,x2lo)<zero(T)<max(x1hi,x2hi))
+		lo_Intv_calc::T = gCxAIntv(x1.Intv,x2.Intv,x1.Intv,x2.Intv,x1,x2)
+		hi_Intv_calc::T = -gCxAIntv(-x1.Intv,x2.Intv,-x1.Intv,x2.Intv,x1,x2)
+		Intv_calc::V = V(lo_Intv_calc,hi_Intv_calc)
 	else
 		Intv_calc = x1.Intv*x2.Intv
 	end
 	cnst = x2.cnst ? x1.cnst : (x1.cnst ? x2.cnst : x1.cnst || x2.cnst)
-	return SMCg{N,T}(cc, cv, cc_grad, cv_grad, Intv_calc, cnst, x1.IntvBox,x1.xref)
+	return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv_calc, cnst, x1.IntvBox,x1.xref)
 end
 
-function mul1_u1pos_u2pos(x1::SMCg{N,T},x2::SMCg{N,T},cnst::Bool) where {N,T<:AbstractFloat}
-  Intv::Interval{T} = x1.Intv*x2.Intv
+function mul1_u1pos_u2pos(x1::SMCg{N,V,T},x2::SMCg{N,V,T},cnst::Bool) where {N,V,T<:AbstractFloat}
+  Intv::V = x1.Intv*x2.Intv
   cv1::T = x2.Intv.hi*x1.cv + x1.Intv.hi*x2.cv - x1.Intv.hi*x2.Intv.hi
   cv2::T = x2.Intv.lo*x1.cv + x1.Intv.lo*x2.cv - x1.Intv.lo*x2.Intv.lo
   if (cv1 > cv2)
@@ -156,9 +343,9 @@ function mul1_u1pos_u2pos(x1::SMCg{N,T},x2::SMCg{N,T},cnst::Bool) where {N,T<:Ab
     cc = cc2
     cc_grad = x2.Intv.hi*x1.cc_grad
   end
-  return SMCg{N,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
+  return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
 end
-function mul1_u1pos_u2mix(x1::SMCg{N,T},x2::SMCg{N,T},cnst::Bool) where {N,T<:AbstractFloat}
+function mul1_u1pos_u2mix(x1::SMCg{N,V,T},x2::SMCg{N,V,T},cnst::Bool) where {N,V,T<:AbstractFloat}
   Intv::Interval{T} = x1.Intv*x2.Intv
   cv1::T = x2.Intv.hi*x1.cv + x1.Intv.hi*x2.cv - x1.Intv.hi*x2.Intv.hi
   cv2::T = x2.Intv.lo*x1.cc + x1.Intv.lo*x2.cv - x1.Intv.lo*x2.Intv.lo
@@ -179,10 +366,10 @@ function mul1_u1pos_u2mix(x1::SMCg{N,T},x2::SMCg{N,T},cnst::Bool) where {N,T<:Ab
     cc = cc2
     cc_grad = x2.Intv.hi*x1.cc_grad
   end
-  return SMCg{N,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
+  return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
 end
-function mul1_u1mix_u2mix(x1::SMCg{N,T},x2::SMCg{N,T},cnst::Bool) where {N,T<:AbstractFloat}
-  Intv::Interval{T} = x1.Intv*x2.Intv
+function mul1_u1mix_u2mix(x1::SMCg{N,V,T},x2::SMCg{N,V,T},cnst::Bool) where {N,V,T<:AbstractFloat}
+  Intv::V = x1.Intv*x2.Intv
   cv1::T = x2.Intv.hi*x1.cv + x1.Intv.hi*x2.cv - x1.Intv.hi*x2.Intv.hi
   cv2::T = x2.Intv.lo*x1.cc + x1.Intv.lo*x2.cc - x1.Intv.lo*x2.Intv.lo
   cv::T = cv1
@@ -203,10 +390,10 @@ function mul1_u1mix_u2mix(x1::SMCg{N,T},x2::SMCg{N,T},cnst::Bool) where {N,T<:Ab
     cc = cc2
     cc_grad = x2.Intv.hi*x1.cc_grad
   end
-  return SMCg{N,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
+  return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
 end
-function mul2_u1pos_u2pos(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
-	Intv::Interval{T} = x1.Intv*x2.Intv
+function mul2_u1pos_u2pos(x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+	Intv::V = x1.Intv*x2.Intv
 	cnst::Bool = x2.cnst ? x1.cnst : (x1.cnst ? x2.cnst : x1.cnst || x2.cnst)
 	cv1::T = x2.Intv.hi*x1.cv + x1.Intv.hi*x2.cv - x1.Intv.hi*x2.Intv.hi
 	cv2::T = x2.Intv.lo*x1.cv + x1.Intv.lo*x2.cv - x1.Intv.lo*x2.Intv.lo
@@ -227,10 +414,10 @@ function mul2_u1pos_u2pos(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat
 		cc = cc2
 		cc_grad = x2.Intv.hi*x1.cc_grad + x1.Intv.lo*x2.cc_grad
 	end
-	return SMCg{N,T}(cc,cv,cc_grad,cv_grad,Intv, cnst,x1.IntvBox,x1.xref)
+	return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,Intv, cnst,x1.IntvBox,x1.xref)
 end
-function mul2_u1pos_u2mix(x1::SMCg{N,T},x2::SMCg{N,T},cnst::Bool) where {N,T<:AbstractFloat}
-  Intv::Interval{T} = x1.Intv*x2.Intv
+function mul2_u1pos_u2mix(x1::SMCg{N,V,T},x2::SMCg{N,V,T},cnst::Bool) where {N,V,T<:AbstractFloat}
+  Intv::V = x1.Intv*x2.Intv
   cv1::T = x2.Intv.hi*x1.cv + x1.Intv.hi*x2.cv - x1.Intv.hi*x2.Intv.hi
   cv2::T = x2.Intv.lo*x1.cc + x1.Intv.lo*x2.cv - x1.Intv.lo*x2.Intv.lo
   if (cv1 > cv2)
@@ -250,10 +437,10 @@ function mul2_u1pos_u2mix(x1::SMCg{N,T},x2::SMCg{N,T},cnst::Bool) where {N,T<:Ab
     cc = cc2
     cc_grad = x1.Intv.lo*x2.cc_grad
   end
-  return SMCg{N,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
+  return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
 end
-function mul2_u1mix_u2mix(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
-	Intv::Interval{T} = x1.Intv*x2.Intv
+function mul2_u1mix_u2mix(x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+	Intv::V = x1.Intv*x2.Intv
   	cnst::Bool = x2.cnst ? x1.cnst : (x1.cnst ? x2.cnst : x1.cnst || x2.cnst)
 	cv1::T = x2.Intv.hi*x1.cv + x1.Intv.hi*x2.cv - x1.Intv.hi*x2.Intv.hi
 	cv2::T = x2.Intv.lo*x1.cc + x1.Intv.lo*x2.cc - x1.Intv.lo*x2.Intv.lo
@@ -275,10 +462,10 @@ function mul2_u1mix_u2mix(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat
 		cc_grad = x2.Intv.hi*x1.cc_grad + x1.Intv.lo*x2.cv_grad
 	end
 
-	return SMCg{N,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
+	return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
 end
-function mul3_u1pos_u2mix(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
-	Intv::Interval{T} = x1.Intv*x2.Intv
+function mul3_u1pos_u2mix(x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+	Intv::V = x1.Intv*x2.Intv
     cnst::Bool = x2.cnst ? x1.cnst : (x1.cnst ? x2.cnst : x1.cnst || x2.cnst)
 	cv1::T = x2.Intv.hi*x1.cv + x1.Intv.hi*x2.cv - x1.Intv.hi*x2.Intv.hi
 	cv2::T = x2.Intv.lo*x1.cc + x1.Intv.lo*x2.cv - x1.Intv.lo*x2.Intv.lo
@@ -300,28 +487,28 @@ function mul3_u1pos_u2mix(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat
 		cc_grad = x2.Intv.hi*x1.cc_grad + x1.Intv.lo*x2.cc_grad
 	end
 
-	return SMCg{N,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
+	return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x1.IntvBox,x1.xref)
 end
 
-function mul_MV_ns1cv(x1::T,x2::T,MC1::SMCg{N,T},MC2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function mul_MV_ns1cv(x1::T,x2::T,MC1::SMCg{N,V,T},MC2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	return MC2.Intv.hi*x1+MC1.Intv.hi*x2-MC2.Intv.hi*MC1.Intv.hi
 end
-function mul_MV_ns2cv(x1::T,x2::T,MC1::SMCg{N,T},MC2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function mul_MV_ns2cv(x1::T,x2::T,MC1::SMCg{N,V,T},MC2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	return MC2.Intv.lo*x1+MC1.Intv.lo*x2-MC2.Intv.lo*MC1.Intv.lo
 end
-function mul_MV_ns3cv(x1::T,x2::T,MC1::SMCg{N,T},MC2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function mul_MV_ns3cv(x1::T,x2::T,MC1::SMCg{N,V,T},MC2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	return max(mul_MV_ns1cv(x1,x2,MC1,MC2),mul_MV_ns2cv(x1,x2,MC1,MC2))
 end
-function mul_MV_ns1cc(x1::T,x2::T,MC1::SMCg{N,T},MC2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function mul_MV_ns1cc(x1::T,x2::T,MC1::SMCg{N,V,T},MC2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	return MC2.Intv.lo*x1+MC1.Intv.hi*x2-MC2.Intv.lo*MC1.Intv.hi
 end
-function mul_MV_ns2cc(x1::T,x2::T,MC1::SMCg{N,T},MC2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function mul_MV_ns2cc(x1::T,x2::T,MC1::SMCg{N,V,T},MC2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	return MC2.Intv.hi*x1+MC1.Intv.lo*x2-MC2.Intv.hi*MC1.Intv.lo
 end
-function mul_MV_ns3cc(x1::T,x2::T,MC1::SMCg{N,T},MC2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function mul_MV_ns3cc(x1::T,x2::T,MC1::SMCg{N,V,T},MC2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	return min(mul_MV_ns1cc(x1,x2,MC1,MC2),mul_MV_ns2cc(x1,x2,MC1,MC2))
 end
-function multiply_MV_NS(x1::SMCg{N,T},x2::SMCg{N,T},ngrad::Int64,cnst::Bool) where {N,T<:AbstractFloat}
+function multiply_MV_NS(x1::SMCg{N,V,T},x2::SMCg{N,V,T},ngrad::Int64,cnst::Bool) where {N,V,T<:AbstractFloat}
 
  k::T = diam(x2.Intv)/diam(x1.Intv)
  z::T = (x1.Intv.hi*x2.Intv.hi - x1.Intv.lo*x2.Intv.lo)/diam(x1.Intv)
@@ -467,10 +654,10 @@ function multiply_MV_NS(x1::SMCg{N,T},x2::SMCg{N,T},ngrad::Int64,cnst::Bool) whe
 	end
 	cc_grad = term1*sigma_cc1 + term2*sigma_cc2
  end
- return SMCg{N,T}(cc,cv,cc_grad,cv_grad,x1.Intv*x2.Intv,cnst,x1.IntvBox,x1.xref)
+ return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,x1.Intv*x2.Intv,cnst,x1.IntvBox,x1.xref)
 end
 
-function multiply_STD_NS(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function multiply_STD_NS(x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	if (x2.Intv.lo >= zero(T))
     	if (x2.cnst)
       		return mul1_u1pos_u2pos(x1,x2,x1.cnst) # cnst to do
@@ -492,7 +679,7 @@ function multiply_STD_NS(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
 	end
 end
 
-function STD_NS_ALT(x::SMCg{N,T},y::SMCg{N,T}) where {N,T<:AbstractFloat}
+function STD_NS_ALT(x::SMCg{N,V,T},y::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	alpha1::T = min( y.Intv.lo*x.cv,  y.Intv.lo*x.cc )
 	alpha2::T = min( x.Intv.lo*y.cv,  x.Intv.lo*y.cc )
 	beta1::T  = min( y.Intv.hi*x.cv,  y.Intv.hi*x.cc )
@@ -531,13 +718,13 @@ function STD_NS_ALT(x::SMCg{N,T},y::SMCg{N,T}) where {N,T<:AbstractFloat}
 	    cc = cc2
 	    cc_grad = s_delta1 + s_delta2
 	end
-	Intv::Interval{T} = x.Intv*y.Intv
-	return SMCg{N,T}(cc,cv,cc_grad,cv_grad,Intv,(x.cnst && y.cnst),x.IntvBox,x.xref)
+	Intv::V = x.Intv*y.Intv
+	return SMCg{N,V,T}(cc,cv,cc_grad,cv_grad,Intv,(x.cnst && y.cnst),x.IntvBox,x.xref)
 end
 
-@inline function *(x1::SMCg{N,T},x2::SMCg{N,T}) where {N,T<:AbstractFloat}
+function *(x1::SMCg{N,V,T},x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	if x1 == x2
-		println("sqr trace")
+		#println("sqr trace")
 		return sqr(x1)
 	end
 
@@ -547,7 +734,7 @@ end
 	if (MC_param.mu >= 1 && ~(degen1||degen2))
 		return multiply_MV(x1,x2)
 	elseif (MC_param.multivar_refine && ~(degen1||degen2))
-		println("NS MV mult trace 1")
+		#println("NS MV mult trace 1")
 		if (x2.cnst)
 			cnst = x1.cnst
 		elseif (x1.cnst)

@@ -14,9 +14,9 @@ b = seed_g(Float64,2,2)
 # a function f(x1,x2) on the interval box xIbox using mBox as a reference point
 x = 2.0
 xIntv1 = Interval(1.0,3.0)
-xIBox = [xIntv1;xIntv1]
+xIBox =  SVector{2,Interval{Float64}}([xIntv1,xIntv1])
 mBox = mid.(xIBox)
-SMCg = SMCg{2,Float64}(x,x,a,a,xIntv1,false,xIBox,mBox)
+SMCg = SMCg{2,Interval{Float64},Float64}(x,x,a,a,xIntv1,false,xIBox,mBox)
 
 # resets gradient to seed gradient with seed at j=2
 grad(SMCg,2)

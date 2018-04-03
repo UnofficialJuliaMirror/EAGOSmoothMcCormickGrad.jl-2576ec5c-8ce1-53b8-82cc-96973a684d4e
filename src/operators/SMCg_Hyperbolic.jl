@@ -46,7 +46,7 @@ end
     end
   end
 end
-@inline function sinh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+@inline function sinh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -64,7 +64,7 @@ end
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
   end
-  return SMCg{N,T}(cc, cv, cc_grad, cv_grad, sinh(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, sinh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end
 
 @inline function asinh_env(x::T,y::T,z::T) where {T<:AbstractFloat}
@@ -115,7 +115,7 @@ end
     end
   end
 end
-@inline function asinh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+@inline function asinh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -133,7 +133,7 @@ end
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
   end
-  return SMCg{N,T}(cc, cv, cc_grad, cv_grad, asinh(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, asinh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end
 
 @inline function tanh_env(x::T,y::T,z::T) where {T<:AbstractFloat}
@@ -184,7 +184,7 @@ end
     end
   end
 end
-@inline function tanh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+@inline function tanh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -202,7 +202,7 @@ end
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
   end
-  return SMCg{N,T}(cc, cv, cc_grad, cv_grad, tanh(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, tanh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end
 
 @inline function atanh_env(x::T,y::T,z::T) where {T<:AbstractFloat}
@@ -253,7 +253,7 @@ end
     end
   end
 end
-@inline function atanh(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+@inline function atanh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -271,5 +271,5 @@ end
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
   end
-  return SMCg{N,T}(cc, cv, cc_grad, cv_grad, atanh(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, atanh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end

@@ -43,7 +43,7 @@ end
     return line_seg(x,xL,zero(T),zero(T),one(T)),dline_seg(x,xL,zero(T),zero(T),one(T),1/x)
   end
 end
-@inline function step(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+@inline function step(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -63,15 +63,15 @@ end
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
   end
-  return SMCg{N,T}(cc, cv, cc_grad, cv_grad, step(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, step(x.Intv),x.cnst,x.IntvBox, x.xref)
 end
 
-@inline function step(x::Interval{T}) where {T<:AbstractFloat}
-           isempty(x) && return emptyinterval(x)
-           xmin::T = ((x.lo)<zero(T)) ? zero(T) : one(T)
-           xmax::T = ((x.hi)>=zero(T)) ? one(T) : zero(T)
-           return Interval{T}(xmin,xmax)
+function step(x::IntervalArithmetic.Interval{T}) where {T}
+      isempty(x) && return emptyinterval(x)
+      xmin::T = ((x.lo)<zero(T)) ? zero(T) : one(T)
+      xmax::T = ((x.hi)>=zero(T)) ? one(T) : zero(T)
+      return Interval{T}(xmin,xmax)
 end
 
 ########### Defines sign
-@inline sign(x::SMCg{N,T}) where {N,T<:AbstractFloat} = -step(x)+2*step(x)
+@inline sign(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = -step(x)+2*step(x)

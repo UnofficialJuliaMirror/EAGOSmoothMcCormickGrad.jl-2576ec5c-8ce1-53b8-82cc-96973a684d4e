@@ -1,21 +1,24 @@
-__precompile__(true)
+#__precompile__(true)
 
 module EAGOSmoothMcCormickGrad
 
+using EAGOIntervalArithmetic
 using IntervalArithmetic
 using StaticArrays
 
+intype(::Type{IntervalArithmetic.Interval{T}}) where T<:AbstractFloat = T
+
 mutable struct McCormickParamters
-  env_max_int # Adjusted
-  env_tol # Adjusted
-  mu # Adjusted
-  valid_check # Adjusted
-  valid_tol
-  subgrad_refine # Adjusted
-  multivar_refine # Adjusted
-  mv_tol # Adjusted
-  outer_rnding # Adjusted
-  outer_param # Adjusted
+  env_max_int::Int64 # Adjusted
+  env_tol::Float64 # Adjusted
+  mu::Int64 # Adjusted
+  valid_check::Bool # Adjusted
+  valid_tol::Float64
+  subgrad_refine ::Bool# Adjusted
+  multivar_refine::Bool # Adjusted
+  mv_tol::Float64 # Adjusted
+  outer_rnding::Bool # Adjusted
+  outer_param::Float64 # Adjusted
   McCormickParamters() = new(100,
                              1E-10,
                              0,
@@ -50,35 +53,21 @@ Affine interval bound tightening is included in the constructor. As well, as a
 validity check options and the cut operator is included if the differentiability
 is set to nonsmooth.
 """
-struct SMCg{N,T<:AbstractFloat} <: Real
+struct SMCg{N,V,T<:AbstractFloat} <: Real
   cc::T
   cv::T
   cc_grad::SVector{N,T}
   cv_grad::SVector{N,T}
-  Intv::Interval{T}
+  Intv::V
   cnst::Bool
-  IntvBox::Vector{Interval{T}}
-  xref::Vector{T}
+  IntvBox::SVector{N,V}
+  xref::SVector{N,T}
 
-  function SMCg{N,T}(cc1::T,cv1::T,cc_grad1::SVector{N,T},cv_grad1::SVector{N,T},
-                Intv1::Interval{T},cnst1::Bool,Intv1Box::Vector{Interval{T}},
-                xref1::Vector{T}) where {N,T}
-    if MC_param.outer_rnding
-      outer_rnd!(Intv1)
-    end
-    if MC_param.subgrad_refine
-      Intv1 = tighten_subgrad(cc1,cv1,cc_grad1,cv_grad1,Intv1,Intv1Box,xref1)
-    end
-    if (MC_param.mu < 1)
-      if (cc1 > Intv1.hi)
-        cc1 = Intv1.hi
-        cc_grad1 = zero(cc_grad1)
-      end
-      if (cv1 < Intv1.lo)
-        cv1 = Intv1.lo
-        cv_grad1 = zero(cc_grad1)
-      end
-    end
+  function SMCg{N,V,T}(cc1::T,cv1::T,cc_grad1::SVector{N,T},cv_grad1::SVector{N,T},
+                Intv1::V,cnst1::Bool,Intv1Box::SVector{N,V},
+                xref1::SVector{N,T}) where {N,V,T<:AbstractFloat}
+    #=
+    can uncomment and enable for debugging.... really onlu useful then.....
     if MC_param.valid_check
       if ((cc1+MC_param.valid_tol)<cv1)
         error("cc must be greater than or equal to cv. cc is $cc1. cv is $cv1")
@@ -88,6 +77,7 @@ struct SMCg{N,T<:AbstractFloat} <: Real
         error("cv must be greater than or equal to lower interval bound. cv is $cv1. cv is $(Intv1.lo)")
       end
     end
+    =#
     new(cc1,cv1,cc_grad1,cv_grad1,Intv1,cnst1,Intv1Box,xref1)
   end
 end
@@ -117,12 +107,12 @@ import Base.*, Base.+, Base.-, Base./, Base.^
 import IntervalArithmetic: dist, pow, widen, sqr, mid
 
 ########### exports functions
-export SMCg, step, abs, max, min, cos, sin, tan, acos, asin, atan, Interval, grad, one, zero
+export SMCg, step, abs, max, min, cos, sin, tan, acos, asin, atan, grad, one, zero
 export sqr, pow, inv, sqrt, exp, log, *, +, -, /, ^, cc, cv, lo, hi, convert, dist, real,zgrad
 export sinh, cosh, tanh, asinh, acosh, atanh, ∩, mid3, value, mincv, maxcc, promote_rule
 export tighten_subgrad, set_iterations, set_tolerance, set_diff_relax, default_options
 export set_valid_check, set_subgrad_refine, set_multivar_refine, set_outer_rnd
-export MC_param, mid_grad, seed_g, line_seg, dline_seg, outer_rnd
+export MC_param, mid_grad, seed_g, line_seg, dline_seg, outer_rnd, Intv, cut
 
 function __init__()
 end
@@ -130,13 +120,8 @@ end
 # Initialization
 """SMC(y::Interval) initializes the differentiable McCormick object with an interval
 """
-SMCg{N,T}(y::Interval,IntvBox,xref1) where {N,T} = SMCg(y.hi,y.lo,[],[],y,true,IntvBox,xref1)
-SMCg{N,T}(val,Intv::Interval,IntvBox,xref1) where {N,T} = SMCg(val,val,[],[],Intv,true,IntvBox,xref1)
-function SMCg(cc::Float64,cv::Float64,cc_grad::SVector{N,Float64},cv_grad::SVector{N,Float64},
-              Intv::Interval{Float64},cnst::Bool,IntvBox::Vector{Interval{Float64}},
-              xref::Vector{Float64}) where {N}
-return SMCg{N,Float64}(cc,cv,cc_grad,cv_grad,Intv,cnst,IntvBox,xref)
-end
+SMCg{N,V,T}(y::V,IntvBox,xref1) where {N,V,T} = SMCg(y.hi,y.lo,[],[],y,true,IntvBox,xref1)
+SMCg{N,V,T}(val,Intv::V,IntvBox,xref1) where {N,V,T} = SMCg(val,val,[],[],Intv,true,IntvBox,xref1)
 
 include("utils/utils.jl")
 include("utils/root_finding.jl")

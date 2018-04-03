@@ -12,9 +12,9 @@ end
 
 sets convex and concave (sub)gradients of length `n` of `x` to be `1` at index `j`
 """
-function grad(x::SMCg{N,T},j::Int64) where {N,T<:AbstractFloat}
+function grad(x::SMCg{N,V,T},j::Int64) where {N,V,T<:AbstractFloat}
   sv_grad::SVector{N,T} = seed_g(T,j,N)
-  return SMCg{N,T}(x.cc,x.cv,sv_grad,sv_grad,x.Intv,x.cnst,x.IntvBox,x.xref)
+  return SMCg{N,V,T}(x.cc,x.cv,sv_grad,sv_grad,x.Intv,x.cnst,x.IntvBox,x.xref)
 end
 
 """
@@ -22,31 +22,31 @@ end
 
 sets convex and concave (sub)gradients of length `n` to be zero
 """
-function zgrad(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+function zgrad(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   grad::SVector{N,T} = @SVector zeros(N)
-  return SMCg{N,T}(x.cc,x.cv,grad,grad,x.Intv,x.cnst,x.IntvBox,x.xref)
+  return SMCg{N,V,T}(x.cc,x.cv,grad,grad,x.Intv,x.cnst,x.IntvBox,x.xref)
 end
 
-function convert(::Type{SMCg{N,T}},x::S) where {S<:Integer,N,T<:AbstractFloat}
+function convert(::Type{SMCg{N,V,T}},x::S) where {S<:Integer,N,V,T<:AbstractFloat}
           seed::SVector{N,T} = @SVector zeros(T,N)
-          SMCg{N,T}(convert(T,x),convert(T,x),seed,seed,Interval(convert(Interval{T},x)),
+          SMCg{N,V,T}(convert(T,x),convert(T,x),seed,seed,V(convert(V,x)),
                     false,[emptyinterval(T)],[zero(T)])
 end
-function convert(::Type{SMCg{N,T}},x::S) where {S<:AbstractFloat,N,T<:AbstractFloat}
+function convert(::Type{SMCg{N,V,T}},x::S) where {S<:AbstractFloat,N,V,T<:AbstractFloat}
           seed::SVector{N,T} = @SVector zeros(T,N)
-          SMCg{N,T}(convert(T,x),convert(T,x),seed,seed,Interval(convert(Interval{T},x)),
+          SMCg{N,V,T}(convert(T,x),convert(T,x),seed,seed,V(convert(V,x)),
                     false,[emptyinterval(T)],[zero(T)])
 end
-function convert(::Type{SMCg{N,T}},x::S) where {S<:Interval,N,T<:AbstractFloat}
+function convert(::Type{SMCg{N,V,T}},x::S) where {S<:Interval,N,V,T<:AbstractFloat}
           seed::SVector{N,T} = @SVector zeros(T,N)
-          SMCg{N,T}(convert(T,x.hi),convert(T,x.lo),seed,seed,convert(Interval{T},x),
+          SMCg{N,V,T}(convert(T,x.hi),convert(T,x.lo),seed,seed,convert(V,x),
                     false,[emptyinterval(T)],[zero(T)])
 end
 
-promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Integer,N,T<:AbstractFloat} = SMCg{N,T}
-promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:AbstractFloat,N,T<:AbstractFloat} = SMCg{N,T}
-promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Interval,N,T<:AbstractFloat} = SMCg{N,T}
-promote_rule(::Type{SMCg{N,T}}, ::Type{S}) where {S<:Real,N,T<:AbstractFloat} = SMCg{N,T}
+promote_rule(::Type{SMCg{N,V,T}}, ::Type{S}) where {S<:Integer,N,V,T<:AbstractFloat} = SMCg{N,V,T}
+promote_rule(::Type{SMCg{N,V,T}}, ::Type{S}) where {S<:AbstractFloat,N,V,T<:AbstractFloat} = SMCg{N,V,T}
+promote_rule(::Type{SMCg{N,V,T}}, ::Type{S}) where {S<:Interval,N,V,T<:AbstractFloat} = SMCg{N,V,T}
+promote_rule(::Type{SMCg{N,V,T}}, ::Type{S}) where {S<:Real,N,V,T<:AbstractFloat} = SMCg{N,V,T}
 
 """
     mid3(x::T,y::T,z::T)
@@ -72,7 +72,7 @@ function mid_grad(cc_grad::SVector{N,T}, cv_grad::SVector{N,T}, id::Int64) where
   elseif (id == 2)
     return cv_grad
   elseif (id == 3)
-    return zero(cc_grad)
+    return zeros(SVector{N,T})
   else
     error("Invalid mid3 position")
   end
@@ -113,8 +113,8 @@ concave gradient, 'cc', the mid index values 'int1,int2', and the derivative of
 the convex and concave envelope functions 'dcv,dcc'.
 """
 function grad_calc(cv::SVector{N,T},cc::SVector{N,T},int1::Int64,int2::Int64,dcv::T,dcc::T) where {N,T<:AbstractFloat}
-  cv_grad::SVector{N,T} = dcv*( int1==1 ? cv :( int1==2 ? cv : zeros(cv)))
-  cc_grad::SVector{N,T} = dcc*( int2==1 ? cc :( int2==2 ? cc : zeros(cv)))
+  cv_grad::SVector{N,T} = dcv*( int1==1 ? cv :( int1==2 ? cv : zeros(SVector{N,T})))
+  cc_grad::SVector{N,T} = dcc*( int2==1 ? cc :( int2==2 ? cc : zeros(SVector{N,T})))
   return cv_grad, cc_grad
 end
 
@@ -131,17 +131,15 @@ Tightens the interval bounds using subgradients. Inputs:
 * `xref::Vector{T}`: Reference point in Xbox
 """
 function tighten_subgrad(cc::T,cv::T,cc_grad::SVector{N,T},cv_grad::SVector{N,T},
-                         Xintv::Interval{T},Xbox::Vector{Interval{T}},xref::Vector{T}) where {N,T<:AbstractFloat}
+                         Xintv::V,Xbox::Vector{V},xref::Vector{T}) where {N,V,T<:AbstractFloat}
   if (length(Xbox)>0 && Xbox[1]!=∅)
-    upper_refine::Interval{T} = Interval{T}(cc)
-    lower_refine::Interval{T} = Interval{T}(cv)
-    for i=1:length(Xbox)
+    upper_refine::V = convert(V,cc)
+    lower_refine::V = convert(V,cv)
+    for i=1:N
       upper_refine = upper_refine + cc_grad[i]*(Xbox[i]-xref[i])
       lower_refine = lower_refine + cv_grad[i]*(Xbox[i]-xref[i])
     end
-    return Interval{T}(max(lower_refine.lo,Xintv.lo),min(upper_refine.hi,Xintv.hi))
-  else
-    return Xintv
+    return max(lower_refine.lo,Xintv.lo), min(upper_refine.hi,Xintv.hi)
   end
 end
 
@@ -150,8 +148,8 @@ end
 
 Outer rounds the interval `Intv` by `MC_param.outer_param`.
 """
-function outer_rnd(Intv::Interval{T}) where {T<:AbstractFloat}
-  return Interval{T}(Intv.lo-MC_param.outer_param, Intv.hi+MC_param.outer_param)
+function outer_rnd(Intv::V) where {V}
+    return Intv.lo-MC_param.outer_param, Intv.hi+MC_param.outer_param
 end
 
 """
@@ -167,6 +165,45 @@ end
 """
     Intv(x::SMCg{N,T})
 """
-function Intv(x::SMCg{N,T}) where {N,T<:AbstractFloat}
+function Intv(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   return x.Intv
 end
+
+"""
+  cut!(x::SMCg{N,V,T})
+"""
+function cut(xL::T,xU::T,cv::T,cc::T,cv_grad::SVector{N,T},cc_grad::SVector{N,T}) where {N,T<:AbstractFloat}
+    if (cc > xU)
+      cco::T = xU
+      cc_grado::SVector{N,T} = zeros(SVector{N,T})
+    else
+      cco = cc
+      cc_grado = cc_grad
+    end
+    if (cv < xL)
+      cvo::T  = xL
+      cv_grado::SVector{N,T} = zeros(SVector{N,T})
+    else
+      cvo = cv
+      cv_grado = cv_grad
+  end
+  return cvo,cco,cv_grado,cc_grado
+end
+
+const eq_tol_flt64 = Float64(1E-12)
+const eq_tol_flt32 = Float32(1E-12)
+const eq_tol_flt16 = Float16(1E-12)
+eq_tol(::Type{Float64}) = eq_tol_flt64
+eq_tol(::Type{Float32}) = eq_tol_flt32
+eq_tol(::Type{Float16}) = eq_tol_flt16
+
+function neq(x::T,y::T) where {T<:AbstractFloat}
+  abs(x-y)>eq_tol(T)
+end
+
+const half_flt64 = Float64(0.5)
+const half_flt32 = Float32(0.5)
+const half_flt16 = Float16(0.5)
+half(::Type{Float64}) = half_flt64
+half(::Type{Float32}) = half_flt32
+half(::Type{Float16}) = half_flt16
