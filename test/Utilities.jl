@@ -48,6 +48,7 @@ dy0 = dline_seg(2.0,1.0,0.0,6.0,10.0,1.0)
 @test dy0 == 2.0
 
 # converts float/integer to SMCg
+#=
 promoted1 = promote_rule(EAGOSmoothMcCormickGrad.SMCg{3,Float64}, Int64)
 promoted2 = promote_rule(EAGOSmoothMcCormickGrad.SMCg{3,Float32}, Float64)
 promoted3 = promote_rule(EAGOSmoothMcCormickGrad.SMCg{3,Float64}, Interval{Float64})
@@ -56,7 +57,7 @@ promoted4 = promote_rule(EAGOSmoothMcCormickGrad.SMCg{3,Float64}, Real)
 @test promoted2 == EAGOSmoothMcCormickGrad.SMCg{3,Float32}
 @test promoted3 == EAGOSmoothMcCormickGrad.SMCg{3,Float64}
 @test promoted4 == EAGOSmoothMcCormickGrad.SMCg{3,Float64}
-
+=#
 #=
 conv_float = convert(EAGOSmoothMcCormickGrad.SMCg{3,Float64},1.0)
 conv_int = convert(EAGOSmoothMcCormickGrad.SMCg{3,Float64},3)
@@ -65,6 +66,7 @@ conv_int = convert(EAGOSmoothMcCormickGrad.SMCg{3,Float64},3)
 @test conv_int == EAGOSmoothMcCormickGrad.SMCg{3,Float64}(3.0, 3.0, SVector{3,Float64}([0.0, 0.0, 0.0]), SVector{3,Float64}([0.0, 0.0, 0.0]), Interval(3, 3), false, IntervalArithmetic.Interval{Float64}[∅], [0.0])
 =#
 
+#=
 # test subgradient refinement
 Intv1 = tighten_subgrad(2.0,1.0,b,b,Interval(-100.0,100.0),[Interval(-1.0,1.0)],[0.0])
 Intv2 = tighten_subgrad(2.0,1.0,b,b,Interval(-100.0,100.0),[∅],[0.0])
@@ -75,5 +77,6 @@ Intv2 = tighten_subgrad(2.0,1.0,b,b,Interval(-100.0,100.0),[∅],[0.0])
 rnd_chk = Interval(-1.0,1.0)
 rnd_chk_out = outer_rnd(rnd_chk)
 @test rnd_chk == rnd_chk_out
+=#
 
 end

@@ -107,13 +107,7 @@ function sqr_cv_NS(x::T,lo::T,hi::T) where {T<:AbstractFloat}
   return x^2,2*x
 end
 function sqr(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  	eps_min::T,blank::Int64 = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))
-  	eps_max::T = ifelse((abs(x.Intv.lo)>=abs(x.Intv.hi)),x.Intv.lo,x.Intv.hi)
-	midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
-	midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
 	if (MC_param.mu >= 1)
-  	cc::T,dcc::T = cc_sqr(midcc,x.Intv.lo,x.Intv.hi)
-  	cv::T,dcv::T = cv_sqr(midcv,x.Intv.lo,x.Intv.hi)
 		gcc1::T,gdcc1::T = cc_sqr(x.cv,x.Intv.lo,x.Intv.hi)
 		gcv1::T,gdcv1::T = cv_sqr(x.cv,x.Intv.lo,x.Intv.hi)
 		gcc2::T,gdcc2::T = cc_sqr(x.cc,x.Intv.lo,x.Intv.hi)
@@ -121,6 +115,10 @@ function sqr(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 		cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
 		cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
 	else
+		eps_min::T,blank::Int64 = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))
+		eps_max::T = ifelse((abs(x.Intv.lo)>=abs(x.Intv.hi)),x.Intv.lo,x.Intv.hi)
+		midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+		midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
 		cc,dcc = sqr_cc_NS(midcc,x.Intv.lo,x.Intv.hi)
 		cv,dcv = sqr_cv_NS(midcv,x.Intv.lo,x.Intv.hi)
 		cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
