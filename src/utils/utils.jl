@@ -27,27 +27,6 @@ function zgrad(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   return SMCg{N,V,T}(x.cc,x.cv,grad,grad,x.Intv,x.cnst,x.IntvBox,x.xref)
 end
 
-function convert(::Type{SMCg{N,V,T}},x::S) where {S<:Integer,N,V,T<:AbstractFloat}
-          seed::SVector{N,T} = @SVector zeros(T,N)
-          SMCg{N,V,T}(convert(T,x),convert(T,x),seed,seed,V(convert(V,x)),
-                    false,[emptyinterval(T)],[zero(T)])
-end
-function convert(::Type{SMCg{N,V,T}},x::S) where {S<:AbstractFloat,N,V,T<:AbstractFloat}
-          seed::SVector{N,T} = @SVector zeros(T,N)
-          SMCg{N,V,T}(convert(T,x),convert(T,x),seed,seed,V(convert(V,x)),
-                    false,[emptyinterval(T)],[zero(T)])
-end
-function convert(::Type{SMCg{N,V,T}},x::S) where {S<:Interval,N,V,T<:AbstractFloat}
-          seed::SVector{N,T} = @SVector zeros(T,N)
-          SMCg{N,V,T}(convert(T,x.hi),convert(T,x.lo),seed,seed,convert(V,x),
-                    false,[emptyinterval(T)],[zero(T)])
-end
-
-promote_rule(::Type{SMCg{N,V,T}}, ::Type{S}) where {S<:Integer,N,V,T<:AbstractFloat} = SMCg{N,V,T}
-promote_rule(::Type{SMCg{N,V,T}}, ::Type{S}) where {S<:AbstractFloat,N,V,T<:AbstractFloat} = SMCg{N,V,T}
-promote_rule(::Type{SMCg{N,V,T}}, ::Type{S}) where {S<:Interval,N,V,T<:AbstractFloat} = SMCg{N,V,T}
-promote_rule(::Type{SMCg{N,V,T}}, ::Type{S}) where {S<:Real,N,V,T<:AbstractFloat} = SMCg{N,V,T}
-
 """
     mid3(x::T,y::T,z::T)
 
@@ -207,3 +186,7 @@ const half_flt16 = Float16(0.5)
 half(::Type{Float64}) = half_flt64
 half(::Type{Float32}) = half_flt32
 half(::Type{Float16}) = half_flt16
+
+
+# defines square operator
+sqr(x::T) where T = x*x

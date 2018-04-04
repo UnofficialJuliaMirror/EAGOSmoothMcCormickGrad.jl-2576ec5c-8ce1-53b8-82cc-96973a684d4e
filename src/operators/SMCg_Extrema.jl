@@ -34,7 +34,6 @@ function max(x::SMCg{N,V,T},c::T) where {N,V,T<:AbstractFloat}
     maxxL::T = max(xL,c)
     maxxU::T = max(xU,c)
     if (MC_param.mu >= 1)
-
       if (x.cc <= xL)
         cv::T,dcv::T = cv_max(x.cc,xL,xU,c)
         cv_grad::SVector{N,T} = dcv*x.cv_grad
@@ -61,45 +60,42 @@ function max(x::SMCg{N,V,T},c::T) where {N,V,T<:AbstractFloat}
         cc = maxxU
         cc_grad = zeros(SVector{N,T})
       end
-
     else
-        # calc convex term
-          if (x.cc <= xL)
-            cv = max(x.cc,c)
-            cv_grad = cv*x.cc_grad
-          elseif (xL >= x.cv)
-            cv = maxxL
-            cv_grad = zeros(SVector{N,T})
-          else
-            cv = max(x.cv,c)
-            cv_grad = cv*x.cv_grad
-          end
+      # calc convex term
+      if (xL < x.cv)
+        cv = max(x.cv,c)
+        cv_grad = (x.cv > c) ? dcv*x.cv_grad : zeros(SVector{N,T})
+      elseif (xL > x.cc)
+        cv = max(x.cc,c)
+        cv_grad = (x.cc > c) ? dcv*x.cc_grad : zeros(SVector{N,T})
+      else
+        cv = max(xL,c)
+        cv_grad = zeros(SVector{N,T})
+      end
 
-          # calc concave term
-          if (neq(xU,xL))
-            dcc = (maxxU-maxxL)/(xU-xL)
-            if (x.cc <= xU)
-              cc = maxxL + dcc*(x.cc - xL)
-              cc_grad = dcc*x.cc_grad
-            elseif (xU >= x.cv)
-              cc = maxxL + dcc*(xU - xL)
-              cc_grad = zeros(SVector{N,T})
-            else
-              cc = maxxL + dcc*(x.cv - xL)
-              cc_grad = dcc*x.cv_grad
-            end
+      # calc concave term
+      if (neq(xU,xL))
+          dcc = (maxxU-maxxL)/(xU-xL)
+          if (xU < x.cv)
+            cc = maxxL + dcc*(x.cv - xL)
+            cc_grad = dcc*x.cv_grad
+          elseif (xU > x.cc)
+            cc = maxxL + dcc*(x.cc - xL)
+            cc_grad = dcc*x.cc_grad
           else
-            cc = maxxU
+            cc = maxxL + dcc*(xU - xL)
             cc_grad = zeros(SVector{N,T})
           end
-          # applies cut operator
-          cv,cc,cv_grad,cc_grad = cut(xL,xU,cv,cc,cv_grad,cc_grad)
+      else
+          cc = xU
+          cc_grad = zeros(SVector{N,T})
+      end
+      # applies cut operator
+      cv,cc,cv_grad,cc_grad = cut(maxxL,maxxU,cv,cc,cv_grad,cc_grad)
     end
-    return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(maxxL,maxxU) : max(x.Intv,c)), x.cnst,x.IntvBox,x.xref)
+    # ((V<:AbstractMCInterval) ? V(maxxL,maxxU) : max(x.Intv,c))
+    return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, max(x.Intv,c), x.cnst,x.IntvBox,x.xref)
 end
-max(c::T,x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = max(x,c)
-min(c::T,x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = -max(-x,-c)
-min(x::SMCg{N,V,T},c::T) where {N,V,T<:AbstractFloat} = -max(-x,-c)
 
 # defines functions on which bivariant maximum mapping from Khan 2016
 @inline function psil_max(x::T,y::T,lambda::V,nu::V,
@@ -210,10 +206,12 @@ end
         cc = cc2
         cc_grad = -(x.cnst ? zeros(y.cc_grad) : r21*x.cc_grad) - (y.cnst ? zeros(x.cc_grad) : r22*y.cc_grad)
       end
+      cv,cc,cv_grad,cc_grad = cut(maxxL,maxxU,cv,cc,cv_grad,cc_grad)
     else
       ccMC::SMCg{N,V,T} = (x+y+abs(x-y))/2
       cc = ccMC.cc
       cc_grad = ccMC.cc_grad
+      cv,cc,cv_grad,cc_grad = cut(maxxL,maxxU,cv,cc,cv_grad,cc_grad)
     end
     cv = max(x.cv,y.cv)
     cv_grad = (x.cv > y.cv) ? (x.cnst ? zeros(x.cv_grad): x.cv_grad) :

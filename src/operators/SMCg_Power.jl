@@ -45,6 +45,9 @@ end
   end
 end
 function pos_odd(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
+  intv::V = pow(x.Intv,c)
+  xLc::T = intv.lo
+  xUc::T = intv.hi
   if (MC_param.mu >= 1)
     eps_max::T = x.Intv.hi
     eps_min::T = x.Intv.lo
@@ -67,12 +70,17 @@ function pos_odd(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
     cv,dcv = cv_powodd(midcv,x.Intv.lo,x.Intv.hi,c)
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  intv::Interval{T} = pow(x.Intv,c)
   return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, intv,x.cnst,x.IntvBox,x.xref)
 end
 
 function pos_even(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  intv::V = x.Intv^c
+  xLc::T = intv.lo
+  xUc::T = intv.hi
   if (x.Intv.hi<zero(x.cc))
     eps_min = x.Intv.hi
     eps_max = x.Intv.lo
@@ -97,21 +105,22 @@ function pos_even(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  intv = x.Intv^c
   return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, intv,x.cnst,x.IntvBox,x.xref)
 end
 
-# TO DO: CHECK
+# TO DO: CUT CORRECTED
 function neg_powneg_odd(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
   xL::T = x.Intv.lo
   xU::T = x.Intv.hi
-  xLc::T = xL^c
-  xUc::T = xU^c
+  INTV::V = x.Intv^c
+  xLc::T = INTV.lo
+  xUc::T = INTV.hi
   if (MC_param.mu >= 1)
     # calculate concave
-    cc = x.cv^c
-    cc_grad = (c*x.cv^(c-1))*x.cv_grad
+    cc = (x.cv)^c
+    cc_grad = (c*(x.cv)^(c-1))*x.cv_grad
     # calculute convex
     if (xU == xL)
       cv = xLc
@@ -124,48 +133,57 @@ function neg_powneg_odd(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
       return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(xUc,xLc) : x.Intv^c),x.cnst,x.IntvBox,x.xref)
     end
   else
+    println("npn_odd trace 2")
     # calc cc
-    if (x.cc >= xL)
-      if (x.cv >= xL)
-        cc = x.cc^c
-        cc_grad = (c*x.cc^(c-1))*x.cc_grad
-      else
-        cc = xL^c
-        cc_grad = zero(SVector{N,T})
-      end
-    else
+    if (xL < x.cv)
       cc = x.cv^c
       cc_grad = (c*x.cv^(c-1))*x.cv_grad
+    elseif (xL > x.cc)
+      cc = x.cc^c
+      cc_grad = (c*x.cc^(c-1))*x.cc_grad
+    else
+      cc = xL^c
+      cc_grad = zero(SVector{N,T})
     end
+
+    println("npn_odd trace 2a")
     if (xU == xL)
       cv = xLc
       cv_grad = zero(SVector{N,T})
-      cv,cc,cv_grad,cc_grad = cut(xL,xU,cv,cc,cv_grad,cc_grad)
+      cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
       return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(xUc,xLc) : x.Intv^c),x.cnst,x.IntvBox,x.xref)
     else
+      println("npn_odd trace 2a")
       dcv = (xUc-xLc)/(xU-xL)
-      if (cc >= xU)
-        if (cv >= xU)
-          cv = xLc + dcv*(x.cv - xL)
-          cv_grad = dcv*x.cv_grad
-        else
-          cv = xLc + dcv*(xU - xL)
-          cv_grad = zero(SVector{N,T})
-        end
-      else
+      if (xU < x.cv)
+        cv = xLc + dcv*(x.cv - xL)
+        cv_grad = dcv*x.cv_grad
+      elseif (xU > x.cc)
         cv = xLc + dcv*(x.cc - xL)
         cv_grad = dcv*x.cc_grad
+      else
+        cv = xLc + dcv*(xU - xL)
+        cv_grad = zero(SVector{N,T})
       end
-      cv,cc,cv_grad,cc_grad = cut(xL,xU,cv,cc,cv_grad,cc_grad)
+      cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
       return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(xUc,xLc) : x.Intv^c),x.cnst,x.IntvBox,x.xref)
     end
   end
 end
 
-# TO DO: lATER
+# TO DO: lATER, CUT CORRECTED
 function neg_powneg_even(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
   xL::T = x.Intv.lo
   xU::T = x.Intv.hi
+  intv = x.Intv^c
+  xLc::T = intv.lo
+  xUc::T = intv.hi
+  eps_min = x.Intv.lo
+  eps_max = x.Intv.hi
+  midcc,cc_id = mid3(x.cc,x.cv,eps_max)
+  midcv,cv_id = mid3(x.cc,x.cv,eps_min)
+  cc,dcc = cc_negpowneg(midcc,x.Intv.lo,x.Intv.hi,c)
+  cv,dcv = cv_negpowneg(midcv,x.Intv.lo,x.Intv.hi,c)
   if (MC_param.mu >= 1)
     gcc1,gdcc1 = cc_negpowneg(x.cv,x.Intv.lo,x.Intv.hi,c)
     gcv1,gdcv1 = cv_negpowneg(x.cv,x.Intv.lo,x.Intv.hi,c)
@@ -174,25 +192,19 @@ function neg_powneg_even(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
     cv_grad = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
     cc_grad = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
-    eps_min = x.Intv.lo
-    eps_max = x.Intv.hi
-    midcc,cc_id = mid3(x.cc,x.cv,eps_max)
-    midcv,cv_id = mid3(x.cc,x.cv,eps_min)
-    cc,dcc = cc_negpowneg(midcc,x.Intv.lo,x.Intv.hi,c)
-    cv,dcv = cv_negpowneg(midcv,x.Intv.lo,x.Intv.hi,c)
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  intv = x.Intv^c
-  return SMCg{N,T}(cc, cv, cc_grad, cv_grad, intv,x.cnst,x.IntvBox,x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, intv,x.cnst,x.IntvBox,x.xref)
 end
 
-# TO DO: CHECK
+# TO DO: CHECK CUT CORRECTED
 function neg_powpos(x::SMCg{N,V,T},c::Int64) where {N,V,T<:AbstractFloat}
   xL::T = x.Intv.lo
   xU::T = x.Intv.hi
-  xUc::T = xU^c
   xLc::T = xL^c
+  xUc::T = xU^c
   if (MC_param.mu >= 1)
     # Calc cv
     cv::T = x.cc^c
@@ -209,41 +221,44 @@ function neg_powpos(x::SMCg{N,V,T},c::Int64) where {N,V,T<:AbstractFloat}
       return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(xUc,xLc) : x.Intv^c),x.cnst,x.IntvBox,x.xref)
     end
   else
+    xcvc::T = x.cv^c
+    xccc::T = x.cc^c
     # cv calculation
-    if (x.cc >= xU)
-      if (x.cv >= xU)
-        cv = x.cv^c
-        cv_grad = (c*x.cv^(c-1))*x.cv_grad
-      else
-        cv = xUc
-        cv_grad = zero(SVector{N,T})
-      end
-    else
-      cv = x.cc^c
+    println("comp: $(xU), $(xcvc), $(xccc)")
+    if (xU < x.cv)
+      println("trace 1")
+      cv = xcvc
+      cv_grad = (c*x.cv^(c-1))*x.cv_grad
+      println("trace 2")
+    elseif (xU > x.cc)
+      println("trace 3")
+      cv = xccc
       cv_grad = (c*x.cc^(c-1))*x.cc_grad
+    else
+      cv = xU^c
+      cv_grad = zero(SVector{N,T})
     end
     # cc calculation
     if (xU == xL)
       cc = xU
       cc_grad = zero(SVector{N,T})
-      cv,cc,cv_grad,cc_grad = cut(xL,xU,cv,cc,cv_grad,cc_grad)
+      cv,cc,cv_grad,cc_grad = cut(xUc,xLc,cv,cc,cv_grad,cc_grad)
       return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(xUc,xLc) : x.Intv^c), x.cnst,x.IntvBox,x.xref)
     else
       dcc = (xUc-xLc)/(xU-xL)
-      if (x.cc >= xL)
-        if (x.cv >= xL)
-          cc = xLc + dcc*(x.cv - xL)
-          cc_grad = dcc*x.cv_grad
-        else
-          cc = xLc
-          cc_grad = zero(SVector{N,T})
-        end
-      else
+      if (xL < x.cv)
+        cc = xLc + dcc*(x.cv - xL)
+        cc_grad = dcc*x.cv_grad
+      elseif (xL > x.cc)
         cc = xLc + dcc*(x.cc - xL)
         cc_grad = dcc*x.cc_grad
+      else
+        cc = xLc
+        cc_grad = zero(SVector{N,T})
       end
-      # applies cut operator
-      cv,cc,cv_grad,cc_grad = cut(xL,xU,cv,cc,cv_grad,cc_grad)
+      println("cv: $cv")
+      cv,cc,cv_grad,cc_grad = cut(xUc,xLc,cv,cc,cv_grad,cc_grad)
+      println("cv: $cv")
       return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(xUc,xLc) : x.Intv^c), x.cnst, x.IntvBox, x.xref)
     end
   end
@@ -266,11 +281,14 @@ function pow(x::SMCg{N,V,T},c::Int64) where {N,V,T<:AbstractFloat}
   else
     if (x.Intv.hi<zero(T))
       if (isodd(c))
+        println("trace 1")
         return neg_powneg_odd(x,c)
       else
+        println("trace 2")
         return neg_powneg_even(x,c) # PRIORITY 2
       end
     elseif (x.Intv.lo>zero(T))
+      println("trace 3")
       return neg_powpos(x,c) # MOSTLY DONE
     else
       error("Function unbounded on domain")
@@ -290,9 +308,12 @@ function  (^)(x::SMCg{N,V,T},c::Float64) where {N,V,T<:AbstractFloat}
 end
 ########### Defines inverse
 function inv(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  println("trace inv")
   if (x.Intv.hi<zero(T))
-      return neg_powneg_odd(x,-1)
+    println("trace inv 1")
+    return neg_powneg_odd(x,-1)
   elseif (x.Intv.lo>zero(T))
+    println("trace inv 2")
     return neg_powpos(x,-1)
   else
     error("Function unbounded on domain")

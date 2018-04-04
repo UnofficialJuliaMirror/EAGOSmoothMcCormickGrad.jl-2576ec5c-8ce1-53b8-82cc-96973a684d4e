@@ -103,9 +103,14 @@ function cos_arg(xL::T,xU::T) where {T<:AbstractFloat}
 end
 
 function cos(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = cos(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T,eps_min::T = cos_arg(x.Intv.lo,x.Intv.hi)
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
-	midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
   cc::T,dcc::T = cc_cos(midcc,x.Intv.lo,x.Intv.hi)
   cv::T,dcv::T = cv_cos(midcv,x.Intv.lo,x.Intv.hi)
   if (MC_param.mu>=1)
@@ -118,8 +123,9 @@ function cos(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, cos(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst, x.IntvBox, x.xref)
 end
 
 function sin(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
@@ -179,15 +185,20 @@ end
   end
 end
 @inline function tan(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  if ((x.Intv.lo==-Inf)||(x.Intv.hi==Inf))
-    error("Function unbounded on domain")
-  end
+  Intv::V = tan(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
   midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
   cc::T,dcc::T = cc_tan(midcc,x.Intv.lo,x.Intv.hi)
   cv::T,dcv::T = cv_tan(midcv,x.Intv.lo,x.Intv.hi)
+  if ((x.Intv.lo==-Inf)||(x.Intv.hi==Inf))
+    error("Function unbounded on domain")
+  end
   if (MC_param.mu >= 1)
     gcc1::T,gdcc1::T = cc_tan(x.cv,x.Intv.lo,x.Intv.hi,c)
     gcv1::T,gdcv1::T = cv_tan(x.cv,x.Intv.lo,x.Intv.hi,c)
@@ -198,8 +209,9 @@ end
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, tan(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst, x.IntvBox, x.xref)
 end
 
 @inline function acos(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
@@ -259,15 +271,20 @@ end
   end
 end
 @inline function asin(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  if ((x.Intv.lo==-Inf)||(x.Intv.hi==Inf))
-    error("Function unbounded on domain")
-  end
+  Intv::V = asin(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
   midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
   cc::T,dcc::T = cc_asin(midcc,x.Intv.lo,x.Intv.hi)
   cv::T,dcv::T = cv_asin(midcv,x.Intv.lo,x.Intv.hi)
+  if ((x.Intv.lo==-Inf)||(x.Intv.hi==Inf))
+    error("Function unbounded on domain")
+  end
   if (MC_param.mu >= 1)
     gcc1::T,gdcc1::T = cc_asin(x.cv,x.Intv.lo,x.Intv.hi,c)
     gcv1::T,gdcv1::T = cv_asin(x.cv,x.Intv.lo,x.Intv.hi,c)
@@ -278,8 +295,9 @@ end
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, asin(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst, x.IntvBox, x.xref)
 end
 
 # pivot point calculation function for convex relaxation of arctangent
@@ -335,6 +353,11 @@ end
   end
 end
 @inline function atan(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = atan(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -351,6 +374,7 @@ end
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, atan(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst, x.IntvBox, x.xref)
 end

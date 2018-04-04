@@ -47,12 +47,11 @@ end
   end
 end
 @inline function sinh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  eps_max::T = x.Intv.hi
-  eps_min::T = x.Intv.lo
-  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
-  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
-  cc::T,dcc::T = cc_sinh(midcc,x.Intv.lo,x.Intv.hi)
-  cv::T,dcv::T = cv_sinh(midcv,x.Intv.lo,x.Intv.hi)
+  Intv::V = sinh(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   if (MC_param.mu >= 1)
     gcc1::T,gdcc1::T = cc_sinh(x.cv,x.Intv.lo,x.Intv.hi,c)
     gcv1::T,gdcv1::T = cv_sinh(x.cv,x.Intv.lo,x.Intv.hi,c)
@@ -61,10 +60,17 @@ end
     cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
     cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
+    eps_max::T = x.Intv.hi
+    eps_min::T = x.Intv.lo
+    midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+    midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+    cc::T,dcc::T = cc_sinh(midcc,x.Intv.lo,x.Intv.hi)
+    cv::T,dcv::T = cv_sinh(midcv,x.Intv.lo,x.Intv.hi)
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, sinh(x.Intv),x.cnst, x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst, x.IntvBox, x.xref)
 end
 
 @inline function asinh_env(x::T,y::T,z::T) where {T<:AbstractFloat}
@@ -116,12 +122,11 @@ end
   end
 end
 @inline function asinh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  eps_max::T = x.Intv.hi
-  eps_min::T = x.Intv.lo
-  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
-  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
-  cc::T,dcc::T = cc_asinh(midcc,x.Intv.lo,x.Intv.hi)
-  cv::T,dcv::T = cv_asinh(midcv,x.Intv.lo,x.Intv.hi)
+  Intv::V = asinh(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   if (MC_param.mu >= 1)
     gcc1::T,gdcc1::T = cc_asinh(x.cv,x.Intv.lo,x.Intv.hi,c)
     gcv1::T,gdcv1::T = cv_asinh(x.cv,x.Intv.lo,x.Intv.hi,c)
@@ -130,8 +135,15 @@ end
     cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
     cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
+    eps_max::T = x.Intv.hi
+    eps_min::T = x.Intv.lo
+    midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+    midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+    cc::T,dcc::T = cc_asinh(midcc,x.Intv.lo,x.Intv.hi)
+    cv::T,dcv::T = cv_asinh(midcv,x.Intv.lo,x.Intv.hi)
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
   return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, asinh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end
@@ -185,12 +197,11 @@ end
   end
 end
 @inline function tanh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  eps_max::T = x.Intv.hi
-  eps_min::T = x.Intv.lo
-  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
-  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
-  cc::T,dcc::T = cc_tanh(midcc,x.Intv.lo,x.Intv.hi)
-  cv::T,dcv::T = cv_tanh(midcv,x.Intv.lo,x.Intv.hi)
+  Intv::V = tanh(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   if (MC_param.mu >= 1)
     gcc1::T,gdcc1::T = cc_tanh(x.cv,x.Intv.lo,x.Intv.hi,c)
     gcv1::T,gdcv1::T = cv_tanh(x.cv,x.Intv.lo,x.Intv.hi,c)
@@ -199,8 +210,15 @@ end
     cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
     cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
+    eps_max::T = x.Intv.hi
+    eps_min::T = x.Intv.lo
+    midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+    midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+    cc::T,dcc::T = cc_tanh(midcc,x.Intv.lo,x.Intv.hi)
+    cv::T,dcv::T = cv_tanh(midcv,x.Intv.lo,x.Intv.hi)
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
   return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, tanh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end
@@ -254,12 +272,11 @@ end
   end
 end
 @inline function atanh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  eps_max::T = x.Intv.hi
-  eps_min::T = x.Intv.lo
-  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
-  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
-  cc::T,dcc::T = cc_atanh(midcc,x.Intv.lo,x.Intv.hi)
-  cv::T,dcv::T = cv_atanh(midcv,x.Intv.lo,x.Intv.hi)
+  Intv::V = atanh(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   if (MC_param.mu >= 1)
     gcc1::T,gdcc1::T = cc_atanh(x.cv,x.Intv.lo,x.Intv.hi,c)
     gcv1::T,gdcv1::T = cv_atanh(x.cv,x.Intv.lo,x.Intv.hi,c)
@@ -268,8 +285,15 @@ end
     cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
     cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
+    eps_max::T = x.Intv.hi
+    eps_min::T = x.Intv.lo
+    midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+    midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+    cc::T,dcc::T = cc_atanh(midcc,x.Intv.lo,x.Intv.hi)
+    cv::T,dcv::T = cv_atanh(midcv,x.Intv.lo,x.Intv.hi)
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
   return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, atanh(x.Intv),x.cnst, x.IntvBox, x.xref)
 end

@@ -93,11 +93,11 @@ Rounds the interval and relaxation bounds of the `z_mct` and `Y_mct` elements ou
 """
 function Rnd_Out_H_Intv(z_mct::Vector{SMCg{N,V,T}},Y_mct::Array{SMCg{N,V,T},2},epsvi::S) where {N,V,S<:AbstractFloat,T<:AbstractFloat}
   epsv::T = convert(T,epsvi)
-  temp1::Vector{SMCg{N,V,T}} = [SMCg(z_mct[i].cc,z_mct[i].cv,
+  temp1::Vector{SMCg{N,V,T}} = [SMCg{N,V,T}(z_mct[i].cc,z_mct[i].cv,
              z_mct[i].cc_grad, z_mct[i].cv_grad,
              V(z_mct[i].Intv.lo-epsv, z_mct[i].Intv.hi+epsv),
              z_mct[i].cnst, z_mct[i].IntvBox,z_mct[i].xref) for i=1:length(z_mct)]
-  temp2::Array{SMCg{N,V,T},2} = [SMCg(Y_mct[i,j].cc,Y_mct[i,j].cv,
+  temp2::Array{SMCg{N,V,T},2} = [SMCg{N,V,T}(Y_mct[i,j].cc,Y_mct[i,j].cv,
              Y_mct[i,j].cc_grad, Y_mct[i,j].cv_grad,
              V(Y_mct[i,j].Intv.lo-epsv, Y_mct[i,j].Intv.hi+epsv),
              Y_mct[i,j].cnst, Y_mct[i,j].IntvBox,Y_mct[i,j].xref) for i=1:length(z_mct), j=1:length(z_mct)]
@@ -166,7 +166,7 @@ end
 
 function Precondition!(hm::Vector{SMCg{N,V,T}},hJm::Array{SMCg{N,V,T},2},
                       Y::Vector{T},nx::Int64) where {N,V,T<:AbstractFloat}
-  S1::SMCg{N,V,T},S2::SMCg{N,V,T} = zero(SMCg{N,T}),zero(SMCg{N,V,T})
+  S1::SMCg{N,V,T},S2::SMCg{N,V,T} = zero(SMCg{N,V,T}),zero(SMCg{N,V,T})
   for i=1:nx
     S2 = zero(SMCg{N,V,T})
     for j=1:nx

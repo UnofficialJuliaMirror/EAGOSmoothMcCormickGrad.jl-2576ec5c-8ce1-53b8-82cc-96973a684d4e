@@ -135,6 +135,7 @@ include("operators/SMCg_ConvexConcave.jl")
 include("operators/SMCg_Trignometric.jl")
 include("operators/SMCg_Hyperbolic.jl")
 include("operators/SMCg_Extrema.jl")
+include("operators/SMCg_Conversions.jl")
 include("operators/SMCg_Other.jl")
 
 export mc_opts, SetOptions!, MC_KrawczykCW, MC_NewtonGS, GenExpansionParams,

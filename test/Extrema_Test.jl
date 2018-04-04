@@ -13,9 +13,9 @@ end
 EAGOSmoothMcCormickGrad.set_diff_relax(0)
 
 a = seed_g(Float64,1,2)
-xIBox = [Interval(-3.0,8.0)]
+xIBox = SVector{2,Interval{Float64}}([Interval(-3.0,8.0),Interval(-3.0,8.0)])
 mBox = mid.(xIBox)
-X = SMCg{2,Float64}(4.5,4.5,a,a,xIBox[1],false,xIBox,mBox)
+X = SMCg{2,Interval{Float64},Float64}(4.5,4.5,a,a,xIBox[1],false,xIBox,mBox)
 out = min(3,X)
 println("out 1: $out")
 @test about(out.cc,3.0,1E-1)
@@ -28,9 +28,9 @@ println("out 1: $out")
 @test about(out.Intv.hi,8,1E-4)
 
 a = seed_g(Float64,1,2)
-xIBox = [Interval(-3.0,8.0)]
+xIBox = SVector{2,Interval{Float64}}([Interval(-3.0,8.0),Interval(-3.0,8.0)])
 mBox = mid.(xIBox)
-X = SMCg{2,Float64}(4.5,4.5,a,a,xIBox[1],false,xIBox,mBox)
+X = SMCg{2,Interval{Float64},Float64}(4.5,4.5,a,a,xIBox[1],false,xIBox,mBox)
 out = max(5,X)
 println("out 2: $out")
 @test about(out.cc,7.045454545454545,1E-1)
@@ -46,9 +46,9 @@ println("out 2: $out")
 EAGOSmoothMcCormickGrad.set_diff_relax(1)
 
 a = seed_g(Float64,1,2)
-xIBox = [Interval(-3.0,8.0)]
+xIBox = SVector{2,Interval{Float64}}([Interval(-3.0,8.0),Interval(-3.0,8.0)])
 mBox = mid.(xIBox)
-X = SMCg{2,Float64}(4.5,4.5,a,a,xIBox[1],false,xIBox,mBox)
+X = SMCg{2,Interval{Float64},Float64}(4.5,4.5,a,a,xIBox[1],false,xIBox,mBox)
 out = min(3,X)
 println("out 3: $out")
 @test about(out.cc,3.0,1E-1)
@@ -61,9 +61,9 @@ println("out 3: $out")
 @test about(out.Intv.hi,8,1E-4)
 
 a = seed_g(Float64,1,2)
-xIBox = [Interval(-3.0,8.0)]
+xIBox = SVector{2,Interval{Float64}}([Interval(-3.0,8.0),Interval(-3.0,8.0)])
 mBox = mid.(xIBox)
-X = SMCg{2,Float64}(4.5,4.5,a,a,xIBox[1],false,xIBox,mBox)
+X = SMCg{2,Interval{Float64},Float64}(4.5,4.5,a,a,xIBox[1],false,xIBox,mBox)
 out = max(5,X)
 println("out 4: $out")
 @test about(out.cc,7.045454545454545,1E-1)

@@ -1,10 +1,11 @@
 function exp(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 
   # initialize reused terms
+  Intv::V = exp(x.Intv)
   xL::T = x.Intv.lo
   xU::T = x.Intv.hi
-  expxL::T = exp(xL)
-  expxU::T  = exp(xU)
+  expxL::T = Intv.lo
+  expxU::T = Intv.hi
 
   if (MC_param.mu >= 1)
     if (x.cc <= xL)
@@ -64,7 +65,7 @@ function exp(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
     end
 
     # applies cut operator
-    cv,cc,cv_grad,cc_grad = cut(xL,xU,cv,cc,cv_grad,cc_grad)
+    cv,cc,cv_grad,cc_grad = cut(expxL,expxU,cv,cc,cv_grad,cc_grad)
   end
 
   return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(expxL,expxU) : exp(x.Intv)),x.cnst, x.IntvBox, x.xref)
@@ -77,6 +78,11 @@ function exp2_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return exp2(x),exp2(x)*log(2)
 end
 function exp2(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = exp2(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -93,8 +99,9 @@ function exp2(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, exp2(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst,x.IntvBox, x.xref)
 end
 
 function exp10_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
@@ -104,6 +111,11 @@ function exp10_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return exp10(x),exp10(x)*log(10)
 end
 function exp10(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = exp10(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -120,8 +132,9 @@ function exp10(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, exp10(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst,x.IntvBox, x.xref)
 end
 
 function sqrt_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
@@ -131,6 +144,11 @@ function sqrt_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return line_seg(x,xL,sqrt(xL),xU,sqrt(xU)),dline_seg(x,xL,sqrt(xL),xU,sqrt(xU),one(T)/(2*sqrt(x)))
 end
 function sqrt(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = sqrt(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -147,8 +165,9 @@ function sqrt(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, sqrt(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst,x.IntvBox, x.xref)
 end
 
 function log_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
@@ -158,6 +177,11 @@ function log_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return line_seg(x,xL,log(xL),xU,log(xU)),dline_seg(x,xL,log(xL),xU,log(xU),one(T)/x)
 end
 function log(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = log(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -174,8 +198,9 @@ function log(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, log(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst,x.IntvBox, x.xref)
 end
 
 function log2_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
@@ -185,6 +210,11 @@ function log2_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return line_seg(x,xL,log2(xL),xU,log2(xU)),dline_seg(x,xL,log2(xL),xU,log2(xU),one(T)/(log(2)*x))
 end
 function log2(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = log2(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -201,8 +231,9 @@ function log2(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, log2(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst,x.IntvBox, x.xref)
 end
 
 function log10_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
@@ -212,6 +243,11 @@ function log10_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return line_seg(x,xL,log10(xL),xU,log10(xU)),dline_seg(x,xL,log10(xL),xU,log10(xU),one(T)/(log(10)*x))
 end
 function log10(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = log10(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -228,8 +264,9 @@ function log10(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, log10(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst,x.IntvBox, x.xref)
 end
 
 function acosh_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
@@ -239,6 +276,11 @@ function acosh_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return line_seg(x,xL,acosh(xL),xU,acosh(xU)),dline_seg(x,xL,acosh(xL),xU,acosh(xU),one(T)/sqrt(x^2 - one(T)))
 end
 function acosh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = acosh(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
   eps_min::T = x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -255,8 +297,9 @@ function acosh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, acosh(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst,x.IntvBox, x.xref)
 end
 
 function abs_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
@@ -281,7 +324,11 @@ function abs_cv_NS(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   return abs(x),sign(x)
 end
 function abs(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  #println("abs x in: ", x)
+  Intv::V = abs(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_min::T,blank = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))
   eps_max::T = (abs(x.Intv.hi)>=abs(x.Intv.lo)) ? x.Intv.hi : x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -296,12 +343,14 @@ function abs(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	  cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
 	  cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
+    #println("abs x in: ", x)
     cc,dcc = abs_cc_NS(midcc,x.Intv.lo,x.Intv.hi)
     cv,dcv = abs_cv_NS(midcv,x.Intv.lo,x.Intv.hi)
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, abs(x.Intv),x.cnst ,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst ,x.IntvBox, x.xref)
 end
 
 function cosh_cv(x::T,xL::T,xU::T) where {T<:AbstractFloat}
@@ -311,6 +360,11 @@ function cosh_cc(x::T,xL::T,xU::T) where {T<:AbstractFloat}
   line_seg(x,xL,cosh(xL),xU,cosh(xU)),dline_seg(x,xL,cosh(xL),xU,cosh(xU),-sinh(x))
 end
 function cosh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+  Intv::V = cosh(x.Intv)
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   eps_min::T,blank = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))
   eps_max::T = (abs(x.Intv.hi)>=abs(x.Intv.lo)) ? x.Intv.hi : x.Intv.lo
   midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
@@ -327,6 +381,7 @@ function cosh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, cosh(x.Intv), x.cnst ,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv, x.cnst ,x.IntvBox, x.xref)
 end

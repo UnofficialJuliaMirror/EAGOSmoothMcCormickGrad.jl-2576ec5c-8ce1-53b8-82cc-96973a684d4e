@@ -44,10 +44,11 @@ end
   end
 end
 @inline function step(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-  eps_max::T = x.Intv.hi
-  eps_min::T = x.Intv.lo
-  midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
-  midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+  Intv::V = step(x.Intv)
+  xL::T = x.lo
+  xU::T = x.hi
+  xLc::T = Intv.lo
+  xUc::T = Intv.hi
   if (MC_param.mu >= 1)
     cc::T,dcc::T = cc_step(midcc,x.Intv.lo,x.Intv.hi)
     cv::T,dcv::T = cv_step(midcv,x.Intv.lo,x.Intv.hi)
@@ -58,12 +59,17 @@ end
 	  cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
 	  cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
+    eps_max::T = x.Intv.hi
+    eps_min::T = x.Intv.lo
+    midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+    midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
     cc,dcc = cc_step_NS(midcc,x.Intv.lo,x.Intv.hi)
     cv,dcv = cv_step_NS(midcv,x.Intv.lo,x.Intv.hi)
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
     cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+    cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
   end
-  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, step(x.Intv),x.cnst,x.IntvBox, x.xref)
+  return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, Intv,x.cnst,x.IntvBox, x.xref)
 end
 
 function step(x::IntervalArithmetic.Interval{T}) where {T}

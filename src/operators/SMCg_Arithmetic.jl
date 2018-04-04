@@ -14,9 +14,12 @@ function /(x::SMCg{N,V,T},y::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	if (x==y)
 		#println("ran me to 1")
 		return one(T)
+	#=
 	elseif (MC_param.multivar_refine) && (~ (MC_param.mu >= 1)) && (pos_orth)
 		#println("ran me to 2")
 		Intv::V = x.Intv/y.Intv
+		xLc::T = Intv.lo
+		xUc::T = Intv.hi
 		cv1::T,pos1::Int64 = mid3(x.cv,x.cc,x.Intv.lo)
 		cv1t::T = (cv1+sqrt(x.intv.lo*x.intv.hi))
 				  /(sqrt(x.intv.lo)+sqrt(x.intv.hi))
@@ -38,53 +41,16 @@ function /(x::SMCg{N,V,T},y::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 			cc_grad = one(T)/y.Intv.hi*mid_grad(x.cc_grad, x.cv_grad, pos1)
 							- x.Intv.hi/(y.Intv.lo*y.Intv.hi)*mid_grad(y.cc_grad, y.cv_grad, pos2)
 		end
+		cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
 		cnst::Bool = y.cnst ? x.cnst : (x.cnst ? y.cnst : x.cnst || y.cnst)
 		return SMCg{T}(cc,cv,cc_grad,cv_grad,Intv,cnst,x.IntvBox,x.xref)
+	=#
 	else
 		#println("ran me to 3")
 		return x*inv(y)
 	end
 end
 
-for numtype in union(int_list,float_list)
-eval(quote
-function +(x::SMCg{N,V,T},y::$numtype) where {N,V,T<:AbstractFloat}
-	return SMCg{N,V,T}(x.cc+y, x.cv+y, x.cc_grad, x.cv_grad, (x.Intv+y),
-	            x.cnst, x.IntvBox,x.xref)
-end
-function +(x::$numtype,y::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-	return SMCg{N,V,T}(x+y.cc, x+y.cv, y.cc_grad, y.cv_grad, (x+y.Intv),
-	            y.cnst, y.IntvBox,y.xref)
-end
-function -(x::SMCg{N,V,T},c::$numtype) where {N,V,T<:AbstractFloat}
-	return x + (-c)
-end
-function -(c::$numtype,x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-	return c + (-x)
-end
-function *(x::SMCg{N,V,T},c::$numtype) where {N,V,T<:AbstractFloat}
-	if (c>=zero(c))
-		temp1::T = convert(T,c*x.cc)
-		temp2::T = convert(T,c*x.cv)
-		return SMCg{N,V,T}(temp1,temp2,c*x.cc_grad,c*x.cv_grad,c*x.Intv,x.cnst,x.IntvBox,x.xref)
-	elseif (c<zero(c))
-		temp1 = convert(T,c*x.cv)
-		temp2 = convert(T,c*x.cc)
-		return SMCg{N,V,T}(temp1,temp2,c*x.cv_grad,c*x.cc_grad,c*x.Intv,x.cnst,x.IntvBox,x.xref)
-	end
-end
-function *(c::$numtype,x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-	return x*c
-end
-@inline sqr(x::$numtype) = x*x
-function /(x::SMCg{N,V,T},y::$numtype) where {N,V,T<:AbstractFloat}
-	x*inv(y)
-end
-function /(x::$numtype,y::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
-	x*inv(y)
-end
-end)
-end
 # convex relaxation of square (Khan2016)
 function cv_sqr(xMC2::T,xL::T,xU::T) where {T<:AbstractFloat}
   if (zero(xMC2)<=xL||xU<=zero(xMC2))
@@ -107,6 +73,15 @@ function sqr_cv_NS(x::T,lo::T,hi::T) where {T<:AbstractFloat}
   return x^2,2*x
 end
 function sqr(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
+	Intv::V = x.Intv^2
+	xLc::T = Intv.lo
+	xUc::T = Intv.hi
+	eps_min::T,blank::Int64 = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))
+	eps_max::T = ifelse((abs(x.Intv.lo)>=abs(x.Intv.hi)),x.Intv.lo,x.Intv.hi)
+	midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
+	midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
+	cc,dcc = sqr_cc_NS(midcc,x.Intv.lo,x.Intv.hi)
+	cv,dcv = sqr_cv_NS(midcv,x.Intv.lo,x.Intv.hi)
 	if (MC_param.mu >= 1)
 		gcc1::T,gdcc1::T = cc_sqr(x.cv,x.Intv.lo,x.Intv.hi)
 		gcv1::T,gdcv1::T = cv_sqr(x.cv,x.Intv.lo,x.Intv.hi)
@@ -115,14 +90,9 @@ function sqr(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 		cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
 		cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
 	else
-		eps_min::T,blank::Int64 = mid3(x.Intv.lo,x.Intv.hi,zero(x.Intv.lo))
-		eps_max::T = ifelse((abs(x.Intv.lo)>=abs(x.Intv.hi)),x.Intv.lo,x.Intv.hi)
-		midcc::T,cc_id::Int64 = mid3(x.cc,x.cv,eps_max)
-		midcv::T,cv_id::Int64 = mid3(x.cc,x.cv,eps_min)
-		cc,dcc = sqr_cc_NS(midcc,x.Intv.lo,x.Intv.hi)
-		cv,dcv = sqr_cv_NS(midcv,x.Intv.lo,x.Intv.hi)
 		cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc
 		cv_grad = mid_grad(x.cc_grad, x.cv_grad, cv_id)*dcv
+		cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)
 	end
   return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, x.Intv^2, x.cnst, x.IntvBox,x.xref)
 end
@@ -140,10 +110,6 @@ dist(x1::SMCg{N,V,T}, x2::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = max(abs(x1
 eps(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = max(eps(x.cc), eps(x.cv))
 
 
-function +(x::SMCg{N,V,T},y::Float64) where {N,V,T<:AbstractFloat}
-	return SMCg{N,V,T}(x.cc+y, x.cv+y, x.cc_grad, x.cv_grad, (x.Intv+y),
-	            x.cnst, x.IntvBox,x.xref)
-end
 #=
 ###### Defines boolean operators
 
