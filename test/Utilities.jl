@@ -16,17 +16,17 @@ x = 2.0
 xIntv1 = Interval(1.0,3.0)
 xIBox =  SVector{2,Interval{Float64}}([xIntv1,xIntv1])
 mBox = mid.(xIBox)
-SMCg = SMCg{2,Interval{Float64},Float64}(x,x,a,a,xIntv1,false,xIBox,mBox)
+SMCg1 = SMCg{2,Interval{Float64},Float64}(x,x,a,a,xIntv1,false,xIBox,mBox)
 
 # resets gradient to seed gradient with seed at j=2
-grad(SMCg,2)
-@test SMCg.cv_grad == SVector{2,Float64}([1,0])
-@test SMCg.cc_grad == SVector{2,Float64}([1,0])
+grad(SMCg1,2)
+@test SMCg1.cv_grad == SVector{2,Float64}([1,0])
+@test SMCg1.cc_grad == SVector{2,Float64}([1,0])
 
 # sets gradients to zero
-SMCg = zgrad(SMCg)
-@test SMCg.cv_grad == SVector{2,Float64}([0,0])
-@test SMCg.cc_grad == SVector{2,Float64}([0,0])
+SMCg1 = zgrad(SMCg1)
+@test SMCg1.cv_grad == SVector{2,Float64}([0,0])
+@test SMCg1.cc_grad == SVector{2,Float64}([0,0])
 
 # checks that mid3 returns midpoint
 mid_return = mid3(9.0,-3.0,5.0)

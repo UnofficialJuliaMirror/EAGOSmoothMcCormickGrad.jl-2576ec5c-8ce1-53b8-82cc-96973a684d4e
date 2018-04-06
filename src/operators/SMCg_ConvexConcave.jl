@@ -376,7 +376,7 @@ function cosh(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
 	  gcv1::T,gdcv1::T = cosh_cv(x.cv,x.Intv.lo,x.Intv.hi)
 	  gcc2::T,gdcc2::T = cosh_cc(x.cc,x.Intv.lo,x.Intv.hi)
 	  gcv2::T,gdcv2::T = cosh_cv(x.cc,x.Intv.lo,x.Intv.hi)
-	  cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad_grad + min(zero(T),gdcv2)*x.cc_grad
+	  cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
 	  cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
     cc_grad = mid_grad(x.cc_grad, x.cv_grad, cc_id)*dcc

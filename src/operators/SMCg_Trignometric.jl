@@ -104,8 +104,8 @@ end
 
 function cos(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   Intv::V = cos(x.Intv)
-  xL::T = x.lo
-  xU::T = x.hi
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
   xLc::T = Intv.lo
   xUc::T = Intv.hi
   eps_max::T,eps_min::T = cos_arg(x.Intv.lo,x.Intv.hi)
@@ -186,8 +186,8 @@ end
 end
 @inline function tan(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   Intv::V = tan(x.Intv)
-  xL::T = x.lo
-  xU::T = x.hi
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
   xLc::T = Intv.lo
   xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
@@ -200,10 +200,10 @@ end
     error("Function unbounded on domain")
   end
   if (MC_param.mu >= 1)
-    gcc1::T,gdcc1::T = cc_tan(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcv1::T,gdcv1::T = cv_tan(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcc2::T,gdcc2::T = cc_tan(x.cc,x.Intv.lo,x.Intv.hi,c)
-    gcv2::T,gdcv2::T = cv_tan(x.cc,x.Intv.lo,x.Intv.hi,c)
+    gcc1::T,gdcc1::T = cc_tan(x.cv,x.Intv.lo,x.Intv.hi)
+    gcv1::T,gdcv1::T = cv_tan(x.cv,x.Intv.lo,x.Intv.hi)
+    gcc2::T,gdcc2::T = cc_tan(x.cc,x.Intv.lo,x.Intv.hi)
+    gcv2::T,gdcv2::T = cv_tan(x.cc,x.Intv.lo,x.Intv.hi)
     cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
     cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
@@ -272,8 +272,8 @@ end
 end
 @inline function asin(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   Intv::V = asin(x.Intv)
-  xL::T = x.lo
-  xU::T = x.hi
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
   xLc::T = Intv.lo
   xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
@@ -286,10 +286,10 @@ end
     error("Function unbounded on domain")
   end
   if (MC_param.mu >= 1)
-    gcc1::T,gdcc1::T = cc_asin(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcv1::T,gdcv1::T = cv_asin(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcc2::T,gdcc2::T = cc_asin(x.cc,x.Intv.lo,x.Intv.hi,c)
-    gcv2::T,gdcv2::T = cv_asin(x.cc,x.Intv.lo,x.Intv.hi,c)
+    gcc1::T,gdcc1::T = cc_asin(x.cv,x.Intv.lo,x.Intv.hi)
+    gcv1::T,gdcv1::T = cv_asin(x.cv,x.Intv.lo,x.Intv.hi)
+    gcc2::T,gdcc2::T = cc_asin(x.cc,x.Intv.lo,x.Intv.hi)
+    gcv2::T,gdcv2::T = cv_asin(x.cc,x.Intv.lo,x.Intv.hi)
     cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
     cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
@@ -354,8 +354,8 @@ end
 end
 @inline function atan(x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat}
   Intv::V = atan(x.Intv)
-  xL::T = x.lo
-  xU::T = x.hi
+  xL::T = x.Intv.lo
+  xU::T = x.Intv.hi
   xLc::T = Intv.lo
   xUc::T = Intv.hi
   eps_max::T = x.Intv.hi
@@ -365,10 +365,10 @@ end
   cc::T,dcc::T = cc_atan(midcc,x.Intv.lo,x.Intv.hi)
   cv::T,dcv::T = cv_atan(midcv,x.Intv.lo,x.Intv.hi)
   if (MC_param.mu >= 1)
-    gcc1::T,gdcc1::T = cc_atan(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcv1::T,gdcv1::T = cv_atan(x.cv,x.Intv.lo,x.Intv.hi,c)
-    gcc2::T,gdcc2::T = cc_atan(x.cc,x.Intv.lo,x.Intv.hi,c)
-    gcv2::T,gdcv2::T = cv_atan(x.cc,x.Intv.lo,x.Intv.hi,c)
+    gcc1::T,gdcc1::T = cc_atan(x.cv,x.Intv.lo,x.Intv.hi)
+    gcv1::T,gdcv1::T = cv_atan(x.cv,x.Intv.lo,x.Intv.hi)
+    gcc2::T,gdcc2::T = cc_atan(x.cc,x.Intv.lo,x.Intv.hi)
+    gcv2::T,gdcv2::T = cv_atan(x.cc,x.Intv.lo,x.Intv.hi)
     cv_grad::SVector{N,T} = max(zero(T),gdcv1)*x.cv_grad + min(zero(T),gdcv2)*x.cc_grad
     cc_grad::SVector{N,T} = min(zero(T),gdcc1)*x.cv_grad + max(zero(T),gdcc2)*x.cc_grad
   else
