@@ -94,6 +94,7 @@ function max(x::SMCg{N,V,T},c::T) where {N,V,T<:AbstractFloat}
       cv,cc,cv_grad,cc_grad = cut(maxxL,maxxU,cv,cc,cv_grad,cc_grad)
     end
     # ((V<:AbstractMCInterval) ? V(maxxL,maxxU) : max(x.Intv,c))
+    println("max interval max(x.Intv,c): $(max(x.Intv,c))")
     return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, max(x.Intv,c), x.cnst,x.IntvBox,x.xref)
 end
 
@@ -240,7 +241,9 @@ end
 end
 @inline mincv(x,y::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = - maxcc(-x,-y)
 @inline min(x::SMCg{N,V,T},y::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = -max(-x,-y)
+#=
 @inline max(x::SMCg{N,V,T},y::V) where {N,V,T<:AbstractFloat} = max(x,SMCg{N,V,T}(y))
 @inline max(y::V,x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = max(x,SMCg{N,V,T}(y))
 @inline min(x::SMCg{N,V,T},y::V) where {N,V,T<:AbstractFloat} = min(x,SMCg{N,V,T}(y))
 @inline min(y::V,x::SMCg{N,V,T}) where {N,V,T<:AbstractFloat} = min(x,SMCg{N,V,T}(y))
+=#
