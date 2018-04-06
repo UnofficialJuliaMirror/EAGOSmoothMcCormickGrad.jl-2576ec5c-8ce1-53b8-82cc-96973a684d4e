@@ -154,15 +154,15 @@ function neg_powneg_odd(x::SMCg{N,V,T},c::Integer) where {N,V,T<:AbstractFloat}
       return SMCg{N,V,T}(cc, cv, cc_grad, cv_grad, ((V<:AbstractMCInterval) ? V(xUc,xLc) : x.Intv^c),x.cnst,x.IntvBox,x.xref)
     else
       println("npn_odd trace 2a")
-      dcv = (xUc-xLc)/(xU-xL)
+      dcv = (xU^c-xL^c)/(xU-xL) # function decreasing
       if (xU < x.cv)
-        cv = xLc + dcv*(x.cv - xL)
+        cv = xUc + dcv*(x.cv - xL)
         cv_grad = dcv*x.cv_grad
       elseif (xU > x.cc)
-        cv = xLc + dcv*(x.cc - xL)
+        cv = xUc + dcv*(x.cc - xL)
         cv_grad = dcv*x.cc_grad
       else
-        cv = xLc + dcv*(xU - xL)
+        cv = xUc + dcv*(xU - xL)
         cv_grad = zero(SVector{N,T})
       end
       cv,cc,cv_grad,cc_grad = cut(xLc,xUc,cv,cc,cv_grad,cc_grad)

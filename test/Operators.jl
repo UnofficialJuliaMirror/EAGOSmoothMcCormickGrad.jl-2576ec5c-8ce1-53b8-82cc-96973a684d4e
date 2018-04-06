@@ -217,8 +217,24 @@ out = X^(4)
 @test about(out.Intv.lo,0,1)
 @test about(out.Intv.hi,4096,1)
 
+######## tests nonsmooth inverse ######
+a = seed_g(Float64,1,2)
+b = seed_g(Float64,2,2)
+xIBox = SVector{2,Interval{Float64}}([Interval(-3.0,4.0);Interval(-5.0,-3.0)])
+mBox = mid.(xIBox)
+Y = SMCg{2,Interval{Float64},Float64}(-4.0,-4.0,b,b,xIBox[2],false,xIBox,mBox)
+out = 1.0/Y
+println("inverse test out: $out")
+@test about(out.cc,-0.25,1E-6)
+@test about(out.cv,-0.266666666,1E-6)
+@test about(out.cc_grad[1],0.0,1E-6)
+@test about(out.cc_grad[2],-0.0625,1E-6)
+@test about(out.cv_grad[1],0.0,1E-6)
+@test about(out.cv_grad[2],-0.0666667,1E-6)
+@test about(out.Intv.lo,-0.33333333,1E-5)
+@test about(out.Intv.hi,-0.199999,1E-5)
+
 ######## tests nonsmooth division ######
-#=
 a = seed_g(Float64,1,2)
 b = seed_g(Float64,2,2)
 xIBox = SVector{2,Interval{Float64}}([Interval(-3.0,4.0);Interval(-5.0,-3.0)])
@@ -235,7 +251,7 @@ println("out!: $out")
 @test about(out.cv_grad[2],0.1875,1E-6)
 @test about(out.Intv.lo,-1.33333333,1E-6)
 @test about(out.Intv.hi,1.0,1E-6)
-=#
+
 ######## tests exponent on product ######
 a = seed_g(Float64,1,2)
 b = seed_g(Float64,2,2)
@@ -351,4 +367,24 @@ ans5 = about(out.cv_grad[1],97.0,1E-4)
 ans6 = about(out.cv_grad[2],0.0,1E-1)
 ans7 = about(out.Intv.lo,-512,1E-4)
 ans8 = about(out.Intv.hi,-27,1E-4)
+=#
+
+######## tests smooth inverse ######
+#=
+a = seed_g(Float64,1,2)
+b = seed_g(Float64,2,2)
+xIBox = SVector{2,Interval{Float64}}([Interval(-3.0,4.0);Interval(-5.0,-3.0)])
+mBox = mid.(xIBox)
+X = SMCg{2,Interval{Float64},Float64}(-2.0,-2.0,a,a,xIBox[1],false,xIBox,mBox)
+Y = SMCg{2,Interval{Float64},Float64}(-4.0,-4.0,b,b,xIBox[2],false,xIBox,mBox)
+out = X/Y
+println("out!: $out")
+@test about(out.cc,0.6,1E-6)
+@test about(out.cv,0.41666666,1E-6)
+@test about(out.cc_grad[1],-0.2,1E-6)
+@test about(out.cc_grad[2],0.2,1E-6)
+@test about(out.cv_grad[1],-0.333333,1E-6)
+@test about(out.cv_grad[2],0.1875,1E-6)
+@test about(out.Intv.lo,-1.33333333,1E-6)
+@test about(out.Intv.hi,1.0,1E-6)
 =#
